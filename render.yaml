@@ -1,0 +1,16 @@
+# This Blueprint defines the public web service only. It is not connected to
+# Render and does not deploy anything by being committed. Automatic deployment
+# remains off until an owner explicitly connects a clean release repository.
+services:
+  - type: web
+    name: brief-public-web
+    runtime: node
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false

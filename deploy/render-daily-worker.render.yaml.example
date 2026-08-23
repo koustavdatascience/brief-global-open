@@ -1,0 +1,25 @@
+# EXAMPLE ONLY — do not rename to render.yaml or sync this file until an owner
+# has explicitly approved the external daily refresh, entered rotated production
+# credentials, and reviewed source/candidate readiness. It creates a billable
+# Render cron service when synced.
+services:
+  - type: cron
+    name: brief-daily-refresh
+    runtime: node
+    schedule: "30 18 * * *" # 00:00 Asia/Kolkata; Render schedules use UTC.
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm refresh:daily
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: WORKER_ID
+        value: brief-render-daily
