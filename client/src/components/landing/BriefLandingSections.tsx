@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import BlurredStagger from "@/components/BlurredStagger";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -469,10 +470,17 @@ export function WorkflowSection() {
     >
       <div className="mx-auto w-full max-w-[1275px] px-6 py-[4.5rem] md:px-10 lg:px-0 lg:py-[5rem]">
         <h2 className="max-w-[34rem] text-[1.9rem] font-medium leading-[1.02] tracking-[-0.055em] text-white sm:text-[2.15rem]">
-          <span className="block">Built for the full policy workflow.</span>
-          <span className="block text-white/45">
+          <BlurredStagger as="span" className="block" delay={80} stagger={18}>
+            Built for the full policy workflow.
+          </BlurredStagger>
+          <BlurredStagger
+            as="span"
+            className="block text-white/45"
+            delay={360}
+            stagger={18}
+          >
             One connected intelligence surface.
-          </span>
+          </BlurredStagger>
         </h2>
 
         <div className="mt-[5.75rem] grid items-start gap-12 lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-[3.5rem]">
@@ -513,7 +521,9 @@ export function WorkflowSection() {
                         <span>{item.label}</span>
                       </div>
                       <h3 className="mt-5 text-[0.95rem] font-semibold leading-6 tracking-[-0.02em] text-white">
-                        {item.title}
+                        <BlurredStagger as="span" delay={180} stagger={16}>
+                          {item.title}
+                        </BlurredStagger>
                       </h3>
                       <p className="mt-1 max-w-[17rem] text-[0.86rem] leading-6 text-white/55">
                         {item.description}
@@ -684,7 +694,9 @@ export function OpenSourceDocs() {
             Open source, in the open
           </p>
           <h2 className="mt-5 max-w-[42rem] text-4xl font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-5xl">
-            The public stack. Directly from GitHub.
+            <BlurredStagger as="span" delay={80} stagger={18}>
+              The public stack. Directly from GitHub.
+            </BlurredStagger>
           </h2>
           <p className="mt-6 max-w-[36rem] text-base leading-7 text-white/50">
             Browse the actual Brief repository as a source-linked public
@@ -1007,7 +1019,9 @@ export function AccessInvitation() {
             Built for public attention
           </p>
           <h2 className="mt-5 max-w-2xl text-4xl font-semibold leading-[1.02] tracking-[-0.055em] sm:text-6xl">
-            Browse what matters. Keep the source close.
+            <BlurredStagger as="span" delay={80} stagger={18}>
+              Browse what matters. Keep the source close.
+            </BlurredStagger>
           </h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/55">
             Every published card is free to read, link, and download. No account
@@ -1031,12 +1045,27 @@ export function AccessInvitation() {
 export function BriefHeroCopy() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center">
-      <span className="sr-only">Global policy intelligence</span>
       <h1 className="ib-reveal ib-reveal-delay-1 max-w-3xl text-balance text-[1.85rem] font-medium leading-[1.02] tracking-[-0.05em] text-white sm:text-[2.2rem] lg:text-[2.5rem]">
-        Know the change.
-        <br />
-        <span className="text-white">Make the call.</span>
+        <BlurredStagger as="span" className="block" delay={120} stagger={18}>
+          Know the change.
+        </BlurredStagger>
+        <BlurredStagger
+          as="span"
+          className="block text-white"
+          delay={420}
+          stagger={18}
+        >
+          Make the call.
+        </BlurredStagger>
       </h1>
+      <BlurredStagger
+        as="p"
+        className="mt-5 max-w-xl text-sm leading-6 text-white/45 sm:text-base"
+        delay={760}
+        stagger={16}
+      >
+        Global policy intelligence
+      </BlurredStagger>
     </div>
   );
 }

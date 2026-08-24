@@ -65,6 +65,19 @@
   }
 }
 
+@keyframes blurred-stagger-in {
+  from {
+    filter: blur(10px);
+    opacity: 0;
+    transform: translate3d(0, 0.08em, 0);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a,
   button {
@@ -90,6 +103,13 @@
   .ib-reveal-delay-3 {
     animation-delay: 180ms;
   }
+  .blurred-stagger__char {
+    display: inline-block;
+    opacity: 0;
+    animation: blurred-stagger-in 720ms var(--ib-ease-out)
+      var(--blurred-stagger-delay) both;
+    will-change: filter, opacity, transform;
+  }
   .ib-lift:hover {
     transform: translate3d(0, -2px, 0);
   }
@@ -105,6 +125,11 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .blurred-stagger__char {
+    filter: none;
+    opacity: 1;
+    transform: none;
   }
 }
 
