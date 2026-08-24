@@ -122,78 +122,12 @@ export function BriefNavigation() {
 
 export function ReferenceHeroPreview() {
   return (
-    <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 w-full max-w-[980px] overflow-hidden rounded-[1.1rem] border border-white/10 bg-[#101319] shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
-      <div className="flex h-9 items-center justify-between border-b border-white/10 px-3 font-mono text-[0.45rem] uppercase tracking-[0.12em] text-white/40 sm:px-5">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-4 w-4 place-items-center rounded-[0.3rem] bg-white text-[0.38rem] font-semibold tracking-[-0.08em] text-[#07080b]">
-            B.
-          </span>
-          <span>Brief workspace</span>
-        </div>
-        <span className="hidden sm:inline">Public · source-linked</span>
-      </div>
-      <div className="grid min-h-[14rem] gap-4 p-3 sm:min-h-[18rem] sm:grid-cols-[minmax(0,1fr)_11rem] sm:p-5">
-        <div className="min-w-0">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <p className="font-mono text-[0.45rem] uppercase tracking-[0.14em] text-[#aeb9ff]">
-                Latest cycle
-              </p>
-              <p className="mt-1.5 max-w-md text-base font-medium leading-tight tracking-[-0.04em] text-white sm:text-lg">
-                Policy changes, organized into what you can do next.
-              </p>
-            </div>
-            <span className="hidden whitespace-nowrap font-mono text-[0.45rem] uppercase tracking-[0.12em] text-white/35 sm:inline">
-              03 changes · 02 ideas
-            </span>
-          </div>
-          <div className="mt-4 divide-y divide-white/10 rounded-lg border border-white/10 bg-white/[0.025] px-3">
-            <div className="grid gap-2 py-3 sm:grid-cols-[6.5rem_minmax(0,1fr)_auto] sm:items-center">
-              <div className="font-mono text-[0.42rem] uppercase leading-4 tracking-[0.1em] text-white/35">
-                EU · AI governance
-                <span className="block text-white/25">Aug 24, 2026</span>
-              </div>
-              <p className="truncate text-sm font-medium tracking-[-0.02em] text-white/85">
-                EU begins AI Act enforcement and transparency rules
-              </p>
-              <span className="w-fit rounded-full border border-[#7184ff]/35 bg-[#7184ff]/10 px-2 py-1 font-mono text-[0.4rem] uppercase tracking-[0.1em] text-[#cbd2ff]">
-                Material
-              </span>
-            </div>
-            <div className="grid gap-2 py-3 sm:grid-cols-[6.5rem_minmax(0,1fr)_auto] sm:items-center">
-              <div className="font-mono text-[0.42rem] uppercase leading-4 tracking-[0.1em] text-white/35">
-                US · Regulation
-                <span className="block text-white/25">Aug 24, 2026</span>
-              </div>
-              <p className="truncate text-sm font-medium tracking-[-0.02em] text-white/70">
-                EPA corrects a proposed rule document
-              </p>
-              <span className="w-fit rounded-full border border-white/10 px-2 py-1 font-mono text-[0.4rem] uppercase tracking-[0.1em] text-white/40">
-                Watch
-              </span>
-            </div>
-          </div>
-        </div>
-        <aside className="hidden rounded-lg border border-white/10 bg-white/[0.025] p-3 sm:block">
-          <p className="font-mono text-[0.43rem] uppercase tracking-[0.12em] text-white/35">
-            Next cycle
-          </p>
-          <p className="mt-3 text-sm font-medium leading-5 tracking-[-0.02em] text-white/80">
-            Sundays + Wednesdays + Fridays
-          </p>
-          <p className="mt-1.5 font-mono text-[0.42rem] uppercase tracking-[0.1em] text-white/30">
-            09:00 IST · Asia/Kolkata
-          </p>
-          <div className="mt-4 border-t border-white/10 pt-4">
-            <p className="font-mono text-[0.43rem] uppercase tracking-[0.12em] text-[#aeb9ff]">
-              Potential idea
-            </p>
-            <p className="mt-2 text-xs leading-5 text-white/55">
-              Export compliance automation
-            </p>
-          </div>
-        </aside>
-      </div>
+    <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 aspect-[2.215] w-full overflow-hidden rounded-[1.1rem] border border-white/10 bg-[#d0d0cc] shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
+      <img
+        alt="Brief workspace preview"
+        className="absolute inset-0 h-full w-full object-cover"
+        src="/brief-workspace-reference.png"
+      />
     </div>
   );
 }
