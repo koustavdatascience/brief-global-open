@@ -116,12 +116,6 @@ export function BriefNavigation() {
       </nav>
       <div className="ml-auto flex items-center gap-2 text-[0.68rem] font-medium text-white/55">
         <a
-          className="hidden h-[30px] items-center rounded-full border border-white/10 bg-white/[0.04] px-3.5 text-[0.68rem] text-white/75 transition hover:border-white/25 hover:text-white sm:inline-flex"
-          href="/workspace"
-        >
-          Read feed
-        </a>
-        <a
           className="inline-flex h-[30px] items-center rounded-full border border-white/80 bg-white px-3.5 text-[0.68rem] font-medium text-[#07080b] shadow-[0_0_24px_rgba(255,255,255,0.08)] transition hover:bg-[#ececec]"
           href="/workspace"
         >
