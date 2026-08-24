@@ -1,0 +1,60 @@
+name: Brief workspace cycle
+
+on:
+  schedule:
+    # Sunday and Wednesday at 03:30 UTC = 09:00 Asia/Kolkata.
+    - cron: "30 3 * * 0,3"
+  workflow_dispatch:
+    inputs:
+      execution_key:
+        description: "Optional unique key for a controlled manual cycle test"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workspace-cycle
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Refresh policy workspace
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        shell: bash
+        run: corepack enable
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: Build production bundles
+        shell: bash
+        run: pnpm build
+
+      - name: Run workspace cycle
+        shell: bash
+        env:
+          SUPABASE_URL: https://kchjbqxdwdwzafzbivko.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash
+          OPENROUTER_MODEL: openai/gpt-oss-20b
+          WORKER_ID: brief-workspace-cycle
+          WORKER_EXECUTION_KEY: ${{ inputs.execution_key }}
+        run: pnpm refresh:workspace

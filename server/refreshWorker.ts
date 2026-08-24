@@ -86,6 +86,7 @@ export async function runDailyRefreshWorker(input: {
   workerId?: string;
   sourceFetch?: typeof fetch;
   analysis?: GlobalCandidateAnalysisDependencies;
+  executionKey?: string;
 }): Promise<DailyWorkerResult> {
   const now = input.now ?? new Date();
   const [configuration, approvedSources] = await Promise.all([
@@ -99,7 +100,8 @@ export async function runDailyRefreshWorker(input: {
 
   const sources = approvedSources.map((source): CycleSource => ({ ...source }));
   const claim = await input.repository.claimRun({
-    executionKey: `brief-external-refresh:${indiaCalendarDate(now)}`,
+    executionKey:
+      input.executionKey ?? `brief-external-refresh:${indiaCalendarDate(now)}`,
     sourceCount: sources.length,
     scheduledFor: now.toISOString(),
     workerId: input.workerId ?? "brief-external-worker",

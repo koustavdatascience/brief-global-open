@@ -15,10 +15,13 @@ type FederalRegisterRecord = {
   title?: string;
   html_url?: string;
   raw_text_url?: string;
+  document_number?: string;
   publication_date?: string;
 };
 
 type FederalRegisterResponse = { results?: FederalRegisterRecord[] };
+
+type FederalRegisterDetail = Pick<FederalRegisterRecord, "raw_text_url">;
 
 function approvedUrl(value: string): string {
   const url = new URL(value);
@@ -63,6 +66,26 @@ async function fetchBoundedText(
   return text;
 }
 
+async function resolveRawTextUrl(
+  record: FederalRegisterRecord,
+  fetcher: typeof fetch
+): Promise<string | null> {
+  if (record.raw_text_url) return approvedUrl(record.raw_text_url);
+  if (!record.document_number) return null;
+
+  const detailUrl = new URL(
+    `https://www.federalregister.gov/api/v1/documents/${encodeURIComponent(record.document_number)}.json`
+  );
+  const response = await fetcher(detailUrl, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!response.ok) return null;
+  approvedUrl(response.url || detailUrl.toString());
+  const detail = (await response.json()) as FederalRegisterDetail;
+  return detail.raw_text_url ? approvedUrl(detail.raw_text_url) : null;
+}
+
 /** Fetches a maximum of five documented Federal Register records. No links are expanded. */
 export async function fetchFederalRegisterDocuments(
   source: FederalRegisterApprovedSource,
@@ -93,9 +116,10 @@ export async function fetchFederalRegisterDocuments(
     : [];
   const documents: BoundedGlobalDocument[] = [];
   for (const record of records) {
-    if (!record.title || !record.html_url || !record.raw_text_url) continue;
+    if (!record.title || !record.html_url) continue;
     const officialRecordUrl = approvedUrl(record.html_url);
-    const sourceDocumentUrl = approvedUrl(record.raw_text_url);
+    const sourceDocumentUrl = await resolveRawTextUrl(record, fetcher);
+    if (!sourceDocumentUrl) continue;
     const sourceText = await fetchBoundedText(sourceDocumentUrl, fetcher);
     documents.push({
       sourceDocumentUrl,

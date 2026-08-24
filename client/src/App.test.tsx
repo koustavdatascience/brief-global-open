@@ -25,8 +25,8 @@ function renderPath(path: string) {
 }
 
 describe("public route surface", () => {
-  it("keeps the public feed available at its workspace compatibility alias", () => {
-    expect(renderPath("/workspace")).toContain("Global discovery");
+  it("renders the public workspace at /workspace", () => {
+    expect(renderPath("/workspace")).toContain("Brief workspace");
   });
 
   it.each(["/access", "/account", "/operations", "/app/sources"])(

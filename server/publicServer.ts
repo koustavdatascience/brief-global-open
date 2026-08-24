@@ -5,17 +5,20 @@ import {
   listPublicJurisdictions,
   listPublicSignals,
 } from "./publicDiscoveryRepository";
+import { listPublicWorkspace } from "./publicWorkspaceRepository";
 import { parsePublicServerEnv, type PublicServerEnv } from "./publicEnv";
 import { SupabaseDataError } from "./supabaseData";
 
 type PublicDataDependencies = {
   listJurisdictions: typeof listPublicJurisdictions;
   listSignals: typeof listPublicSignals;
+  listWorkspace?: typeof listPublicWorkspace;
 };
 
 const defaultDependencies: PublicDataDependencies = {
   listJurisdictions: listPublicJurisdictions,
   listSignals: listPublicSignals,
+  listWorkspace: listPublicWorkspace,
 };
 
 function numericQuery(value: unknown, fallback: number, maximum: number) {
@@ -75,6 +78,19 @@ export function createPublicApp(
           numericQuery(request.query.limit, 32, 64) || 32
         );
         response.json(jurisdictions);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  app.get(
+    "/api/public/workspace",
+    async (_request: Request, response: Response, next) => {
+      try {
+        response.json(
+          await (dependencies.listWorkspace ?? listPublicWorkspace)()
+        );
       } catch (error) {
         next(error);
       }

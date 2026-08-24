@@ -73,6 +73,26 @@ describe("finite daily refresh worker", () => {
     expect(sourceFetch).not.toHaveBeenCalled();
   });
 
+  it("uses an explicit execution key for a controlled manual run", async () => {
+    const claimRun = vi.fn().mockResolvedValue({ id: "run-1", claimed: true });
+    await runDailyRefreshWorker({
+      repository: repository({
+        getConfiguration: async () => ({
+          isEnabled: true,
+          executorStatus: "ready",
+        }),
+        claimRun,
+      }),
+      executionKey: "brief-external-refresh:manual-2026-08-24",
+    });
+
+    expect(claimRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executionKey: "brief-external-refresh:manual-2026-08-24",
+      })
+    );
+  });
+
   it("finishes a claimed empty approved-source cycle without publishing anything", async () => {
     const finishRun = vi.fn().mockResolvedValue(undefined);
     const result = await runDailyRefreshWorker({

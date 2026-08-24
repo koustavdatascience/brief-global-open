@@ -25,7 +25,7 @@ describe("Discover", () => {
 
   it("shows the open export action without an account context", () => {
     const html = renderToStaticMarkup(
-      <Router hook={() => ["/workspace", vi.fn()]}>
+      <Router hook={() => ["/discover", vi.fn()]}>
         <Discover />
       </Router>
     );
