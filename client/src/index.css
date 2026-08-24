@@ -241,107 +241,11 @@
 
 .brief-reference-preview {
   isolation: isolate;
-  min-height: 18rem;
-}
-
-.brief-reference-landscape {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      circle at 50% 12%,
-      rgba(255, 255, 255, 0.9) 0,
-      rgba(255, 255, 255, 0.45) 8%,
-      transparent 22%
-    ),
-    linear-gradient(
-      180deg,
-      #d9d9d5 0%,
-      #bdbdb8 38%,
-      #8c8c87 58%,
-      #4d4d49 75%,
-      #171816 100%
-    );
-  filter: grayscale(1);
-}
-
-.brief-reference-landscape::before,
-.brief-reference-landscape::after {
-  position: absolute;
-  inset: auto -6% 0;
-  height: 55%;
-  content: "";
-}
-
-.brief-reference-landscape::before {
-  background: #555652;
-  clip-path: polygon(
-    0 66%,
-    10% 48%,
-    20% 57%,
-    30% 20%,
-    41% 44%,
-    53% 28%,
-    63% 53%,
-    74% 42%,
-    84% 63%,
-    100% 34%,
-    100% 100%,
-    0 100%
-  );
-  opacity: 0.74;
-}
-
-.brief-reference-landscape::after {
-  background: #191a18;
-  clip-path: polygon(
-    0 77%,
-    12% 57%,
-    22% 70%,
-    34% 47%,
-    45% 63%,
-    57% 45%,
-    67% 67%,
-    78% 49%,
-    88% 69%,
-    100% 57%,
-    100% 100%,
-    0 100%
-  );
-  opacity: 0.86;
-}
-
-.brief-reference-haze {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.12),
-      transparent 35%,
-      rgba(255, 255, 255, 0.14) 55%,
-      transparent 84%
-    ),
-    radial-gradient(
-      ellipse at 82% 30%,
-      rgba(255, 255, 255, 0.34),
-      transparent 24%
-    ),
-    linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.14));
-  mix-blend-mode: screen;
-  opacity: 0.7;
 }
 
 .brief-reference-trust {
   color: rgba(255, 255, 255, 0.5);
   filter: grayscale(1);
-}
-
-@media (max-width: 640px) {
-  .brief-reference-preview {
-    aspect-ratio: 0.98;
-    min-height: 25rem;
-  }
 }
 
 :root {

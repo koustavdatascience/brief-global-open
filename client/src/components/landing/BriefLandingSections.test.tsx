@@ -6,6 +6,7 @@ import {
   BriefHeroCopy,
   BriefNavigation,
   PrincipleCards,
+  ReferenceHeroPreview,
   SignalBoard,
   WorkflowSteps,
 } from "./BriefLandingSections";
@@ -16,6 +17,7 @@ describe("BriefLandingSections", () => {
       <>
         <BriefNavigation />
         <BriefHeroCopy />
+        <ReferenceHeroPreview />
         <SignalBoard />
         <WorkflowSteps
           steps={[
@@ -37,6 +39,10 @@ describe("BriefLandingSections", () => {
 
     expect(html).toContain("Explore");
     expect(html).toContain("Global discovery");
+    expect(html).toContain(
+      "Policy changes, organized into what you can do next."
+    );
+    expect(html).toContain("Potential idea");
     expect(html).toContain("Explore first");
     expect(html).toContain("Browse what matters. Keep the source close.");
   });
