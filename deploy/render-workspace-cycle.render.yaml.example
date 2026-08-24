@@ -1,10 +1,10 @@
 # Example only: keep this private cron service separate from the public web service.
-# Render cron schedules use UTC. 03:30 UTC on Sunday and Wednesday is 09:00 IST.
+# Render cron schedules use UTC. 03:30 UTC on Sunday, Wednesday, and Friday is 09:00 IST.
 services:
   - type: cron
     name: brief-workspace-cycle
     runtime: node
-    schedule: "30 3 * * 0,3"
+    schedule: "30 3 * * 0,3,5"
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm refresh:workspace
     envVars:

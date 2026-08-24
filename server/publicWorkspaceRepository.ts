@@ -79,7 +79,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     return {
       cycle: null,
       schedule: {
-        label: "Sundays and Wednesdays at 09:00",
+        label: "Sundays, Wednesdays, and Fridays at 09:00",
         timezone: "Asia/Kolkata",
         next_window: "The first scheduled cycle is being prepared.",
       },
@@ -106,7 +106,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     return {
       cycle,
       schedule: {
-        label: "Sundays and Wednesdays at 09:00",
+        label: "Sundays, Wednesdays, and Fridays at 09:00",
         timezone: "Asia/Kolkata",
         next_window: "The next cycle will refresh this public workspace.",
       },
@@ -132,7 +132,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     return {
       cycle,
       schedule: {
-        label: "Sundays and Wednesdays at 09:00",
+        label: "Sundays, Wednesdays, and Fridays at 09:00",
         timezone: "Asia/Kolkata",
         next_window: "The next cycle will refresh this public workspace.",
       },
@@ -146,19 +146,29 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     select: "idea_id,body_markdown,generated_at",
     idea_id: `in.${inFilter(ideaIds)}`,
     is_public: "eq.true",
-    order: "generated_at.asc",
+    order: "generated_at.desc",
     limit: String(CHANGE_LIMIT),
   });
   const expansionResponse = await supabasePublicFetch(
     `/rest/v1/brief_idea_expansions?${expansionQuery.toString()}`
   );
-  const expansions =
+  const expansionRows =
     (await expansionResponse.json()) as PublicWorkspaceExpansion[];
+  const latestExpansionByIdea = new Map<string, PublicWorkspaceExpansion>();
+  for (const expansion of expansionRows) {
+    if (!latestExpansionByIdea.has(expansion.idea_id))
+      latestExpansionByIdea.set(expansion.idea_id, expansion);
+  }
+  const expansions = ideas
+    .map(idea => latestExpansionByIdea.get(idea.id))
+    .filter((expansion): expansion is PublicWorkspaceExpansion =>
+      Boolean(expansion)
+    );
 
   return {
     cycle,
     schedule: {
-      label: "Sundays and Wednesdays at 09:00",
+      label: "Sundays, Wednesdays, and Fridays at 09:00",
       timezone: "Asia/Kolkata",
       next_window: "The next cycle will refresh this public workspace.",
     },

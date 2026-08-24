@@ -2,8 +2,8 @@ name: Brief workspace cycle
 
 on:
   schedule:
-    # Sunday and Wednesday at 03:30 UTC = 09:00 Asia/Kolkata.
-    - cron: "30 3 * * 0,3"
+    # Sunday, Wednesday, and Friday at 03:30 UTC = 09:00 Asia/Kolkata.
+    - cron: "30 3 * * 0,3,5"
   workflow_dispatch:
     inputs:
       execution_key:

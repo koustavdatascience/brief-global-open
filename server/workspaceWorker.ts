@@ -61,6 +61,7 @@ function serviceRoleFetch(
         ...(init.headers ?? {}),
       },
     });
+
     if (!response.ok) throw new WorkspaceWorkerError(response.status);
     return response;
   };
@@ -193,26 +194,29 @@ async function materializeWorkspaceCycle(input: {
       : undefined;
     if (!parsed.success || !document || !source || !jurisdiction) continue;
     const signal = parsed.data;
-    const changeResponse = await request("/rest/v1/brief_changes", {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=merge-duplicates,return=representation",
-      },
-      body: JSON.stringify({
-        cycle_id: cycleId,
-        source_candidate_id: candidate.id,
-        jurisdiction_id: jurisdiction.id,
-        headline: signal.headline.slice(0, 240),
-        summary: signal.summary.slice(0, 2000),
-        change_type: changeType(signal.signalType),
-        importance: importance(signal.confidence),
-        canonical_url: document.official_record_url,
-        published_at: document.published_at ?? input.scheduledFor,
-        source_name: source.name.slice(0, 180),
-        content_sha256: document.content_sha256,
-        is_public: true,
-      }),
-    });
+    const changeResponse = await request(
+      "/rest/v1/brief_changes?on_conflict=cycle_id%2Ccontent_sha256",
+      {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify({
+          cycle_id: cycleId,
+          source_candidate_id: candidate.id,
+          jurisdiction_id: jurisdiction.id,
+          headline: signal.headline.slice(0, 240),
+          summary: signal.summary.slice(0, 2000),
+          change_type: changeType(signal.signalType),
+          importance: importance(signal.confidence),
+          canonical_url: document.official_record_url,
+          published_at: document.published_at ?? input.scheduledFor,
+          source_name: source.name.slice(0, 180),
+          content_sha256: document.content_sha256,
+          is_public: true,
+        }),
+      }
+    );
     const changeRows = (await changeResponse.json()) as Array<{ id: string }>;
     const changeId = changeRows[0]?.id;
     if (!changeId) continue;
@@ -228,29 +232,32 @@ async function materializeWorkspaceCycle(input: {
     };
     const idea = await generateWorkspaceIdea(change);
     if (!idea) continue;
-    const ideaResponse = await request("/rest/v1/brief_ideas", {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=merge-duplicates,return=representation",
-      },
-      body: JSON.stringify({
-        change_id: changeId,
-        title: idea.title,
-        summary: idea.summary,
-        rationale: idea.rationale,
-        confidence: idea.confidence,
-        model_id: idea.modelId ?? candidate.model_id,
-        prompt_version: idea.promptVersion,
-        is_public: true,
-      }),
-    });
+    const ideaResponse = await request(
+      "/rest/v1/brief_ideas?on_conflict=change_id",
+      {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify({
+          change_id: changeId,
+          title: idea.title,
+          summary: idea.summary,
+          rationale: idea.rationale,
+          confidence: idea.confidence,
+          model_id: idea.modelId ?? candidate.model_id,
+          prompt_version: idea.promptVersion,
+          is_public: true,
+        }),
+      }
+    );
     const ideaRows = (await ideaResponse.json()) as Array<{ id: string }>;
     const ideaId = ideaRows[0]?.id;
     if (!ideaId) continue;
     ideaCount += 1;
     const expansion = await generateWorkspaceExpansion(change, idea);
     if (expansion) {
-      await request("/rest/v1/brief_idea_expansions", {
+      await request("/rest/v1/brief_idea_expansions?on_conflict=idea_id", {
         method: "POST",
         headers: {
           Prefer: "resolution=merge-duplicates,return=minimal",

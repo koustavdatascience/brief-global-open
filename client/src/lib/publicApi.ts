@@ -104,5 +104,8 @@ export function listPublicJurisdictions(signal?: AbortSignal) {
 }
 
 export function getPublicWorkspace(signal?: AbortSignal) {
-  return getJson<PublicWorkspace>("/api/public/workspace", signal);
+  return getJson<PublicWorkspace>(
+    `/api/public/workspace?refresh=${Date.now()}`,
+    signal
+  );
 }

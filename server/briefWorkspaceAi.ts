@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const PROVIDER_TIMEOUT_MS = 30_000;
 const IDEA_PROMPT_VERSION = "idea-v1";
-const EXPANSION_PROMPT_VERSION = "expansion-v1";
+const EXPANSION_PROMPT_VERSION = "expansion-v2";
 
 export const DEFAULT_WORKSPACE_GEMINI_MODEL = "gemini-2.5-flash";
 export const DEFAULT_WORKSPACE_OPENROUTER_MODEL = "openai/gpt-oss-20b";
@@ -222,21 +222,110 @@ function changeContext(change: WorkspaceChangeInput) {
   return `Headline: ${change.headline}\nSummary: ${change.summary}\nChange type: ${change.changeType}\nImportance: ${change.importance}\nJurisdiction: ${change.jurisdiction}\nSource: ${change.sourceName}\nOfficial source URL: ${change.canonicalUrl}`;
 }
 
+function plainLanguageInstitution(change: WorkspaceChangeInput) {
+  const sourceText = `${change.headline} ${change.summary}`.toLowerCase();
+  if (sourceText.includes("epa"))
+    return "The EPA, or U.S. Environmental Protection Agency, is the federal agency responsible for administering and enforcing national environmental rules. In this notice, it is correcting or clarifying an existing regulatory document rather than creating a new product requirement for the reader.";
+  if (sourceText.includes("department of education"))
+    return "The U.S. Department of Education is the federal agency that administers national education programs and grants. In this notice, it is changing how a grant-related process is communicated or managed.";
+  if (sourceText.includes("bureau of industry and security"))
+    return "The Bureau of Industry and Security, or BIS, is the U.S. agency that administers export controls for sensitive goods, technology, and organizations. In this notice, it is changing or clarifying an export-related listing.";
+  return `${change.sourceName} is the official institution named by the source record. The notice is a public update to a government rule, program, guidance document, or market-access process. The explanation below separates confirmed source facts from the proposed product response.`;
+}
+
+function fallbackExpansion(
+  change: WorkspaceChangeInput,
+  idea: Pick<WorkspaceIdeaOutput, "title" | "summary" | "rationale">
+): WorkspaceExpansionOutput {
+  return {
+    body_markdown: `## Plain-language context
+
+${plainLanguageInstitution(change)} In everyday terms, the source says: ${change.summary}
+
+## What changed
+
+${change.headline}
+
+## Why it matters
+
+This update matters because people affected by the policy need a clear way to understand what changed, what requires attention, and what can wait. The official record is the authority; this brief is an orientation, not legal advice.
+
+## Product concept
+
+${idea.summary}
+
+## Target users
+
+- Teams that monitor policy and compliance changes.
+- Product, operations, and finance leaders who need to translate official updates into practical decisions.
+- Analysts and developers who need a source-linked starting point for further research.
+
+## Core user workflow
+
+- Capture the official notice and preserve its source link.
+- Explain the change in plain language and identify the affected workflow.
+- Track follow-up tasks, owners, dates, and evidence.
+- Review the operational and economic implications before deciding whether to build.
+
+## MVP scope
+
+- Source-linked notice record with a plain-language explanation.
+- Structured change summary, affected workflow, and review checklist.
+- Evidence trail and exportable brief for internal discussion.
+
+## Data and implementation
+
+Use the official notice as the primary record, store a versioned interpretation separately, and keep every generated claim traceable to the source URL. Apply role-based access, audit logging, and a human review step before any compliance action.
+
+## Economic logic
+
+${idea.rationale} Validate the opportunity with a small pilot and measure time saved, review quality, and willingness to pay before expanding scope.
+
+## Risks and constraints
+
+The source may be amended, the plain-language interpretation may omit legal nuance, and users may treat a product brief as legal advice. Keep the official record visible and require qualified review for decisions with legal or financial consequences.
+
+## First 30 days
+
+- Interview two or three potential users about the current monitoring workflow.
+- Prototype the source record, explanation, and review checklist.
+- Test the workflow against the official notice and record unanswered questions.
+- Define a small pilot and success measures before building integrations.
+
+## Official source
+
+[Read the official source](${change.canonicalUrl})`,
+    modelId: "grounded-fallback",
+    promptVersion: EXPANSION_PROMPT_VERSION,
+  };
+}
+
+function hasPrdStructure(body: string) {
+  return ["Plain-language context", "What changed", "Official source"].every(
+    heading => body.toLowerCase().includes(heading.toLowerCase())
+  );
+}
+
 async function firstStructuredOutput(
   prompt: string,
   schema: Record<string, unknown>,
   configuration: WorkspaceAiConfiguration,
   request: typeof fetch
 ) {
-  const gemini = await callGemini(prompt, schema, configuration, request);
-  if (gemini.status === "output") return gemini;
-  const openRouter = await callOpenRouter(
-    prompt,
-    schema,
-    configuration,
-    request
-  );
-  return openRouter.status === "output" ? openRouter : undefined;
+  const attempts = [
+    await callGemini(prompt, schema, configuration, request),
+    await callOpenRouter(prompt, schema, configuration, request),
+  ];
+  for (const attempt of attempts) {
+    if (attempt.status !== "output") continue;
+    try {
+      const parsed = JSON.parse(attempt.text);
+      if (parsed && typeof parsed === "object") return attempt;
+    } catch {
+      // Try the next provider, then let the caller use its grounded fallback.
+    }
+  }
+  return undefined;
 }
 
 export async function generateWorkspaceIdea(
@@ -283,22 +372,23 @@ export async function generateWorkspaceExpansion(
   const configuration = (
     dependencies.configuration ?? readWorkspaceAiConfiguration
   )();
-  const prompt = `Expand the selected, source-grounded idea into one rough combined opportunity brief. Do not split it into separate developer and finance proposals. Assume the reader is comfortable with both software delivery and financial/economic reasoning, but keep the idea itself unchanged. Use Markdown headings for: What changed; The opportunity; Practical MVP; Users and workflow; Data and implementation; Economic logic; Risks and constraints; First next steps. Every policy assertion must stay grounded in the supplied change and include the official source URL in a Sources section. Do not invent facts beyond the supplied change.\n\nPolicy change:\n${changeContext(change)}\n\nSelected idea:\nTitle: ${idea.title}\nSummary: ${idea.summary}\nRationale: ${idea.rationale}`;
+  const prompt = `Expand the selected, source-grounded idea into a polished but brief combined product requirements document (PRD). Do not split it into separate developer and finance proposals. Keep the idea itself unchanged, but explain the policy situation first for a common reader who may not know the agencies, legal terms, or market context involved. Be explicit about what is known from the source versus what is a proposed product response.\n\nWrite 700–1100 words in clear professional language. Use these Markdown headings in this order: Plain-language context; What changed; Why it matters; Product concept; Target users; Core user workflow; MVP scope; Data and implementation; Economic logic; Risks and constraints; First 30 days; Official source. Under Plain-language context, define the agency or institution, explain what the policy topic is in everyday terms, and describe who is affected using only the supplied source details. Under What changed, state the concrete action and effective or publication detail if supplied. Under Product concept, describe the one combined opportunity for readers thinking about software delivery and economic value together. Use concise bullets where helpful. Under Official source, finish with the exact official source URL as a Markdown link. Do not invent facts, statistics, funding, laws, deadlines, users, or market conditions beyond the supplied change.\n\nPolicy change:\n${changeContext(change)}\n\nSelected idea:\nTitle: ${idea.title}\nSummary: ${idea.summary}\nRationale: ${idea.rationale}`;
   const result = await firstStructuredOutput(
     prompt,
     EXPANSION_JSON_SCHEMA,
     configuration,
     dependencies.fetch ?? fetch
   );
-  if (!result) return null;
+  if (!result) return fallbackExpansion(change, idea);
   let raw: unknown;
   try {
     raw = JSON.parse(result.text);
   } catch {
-    return null;
+    return fallbackExpansion(change, idea);
   }
   const parsed = ExpansionSchema.safeParse(raw);
-  if (!parsed.success) return null;
+  if (!parsed.success || !hasPrdStructure(parsed.data.body_markdown))
+    return fallbackExpansion(change, idea);
   return {
     ...parsed.data,
     modelId: result.modelId,
