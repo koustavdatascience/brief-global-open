@@ -28,24 +28,42 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Confirm owner activation
+        id: activation
+        shell: bash
+        env:
+          BRIEF_WORKSPACE_CYCLE_ENABLED: ${{ vars.BRIEF_WORKSPACE_CYCLE_ENABLED }}
+        run: |
+          if [ "$BRIEF_WORKSPACE_CYCLE_ENABLED" != "true" ]; then
+            echo "The workspace cycle is disabled. No credentials or source requests will be used."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
       - name: Set up Node.js
+        if: steps.activation.outputs.enabled == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Enable Corepack
+        if: steps.activation.outputs.enabled == 'true'
         shell: bash
         run: corepack enable
 
       - name: Install dependencies
+        if: steps.activation.outputs.enabled == 'true'
         shell: bash
         run: pnpm install --frozen-lockfile
 
       - name: Build production bundles
+        if: steps.activation.outputs.enabled == 'true'
         shell: bash
         run: pnpm build
 
       - name: Run workspace cycle
+        if: steps.activation.outputs.enabled == 'true'
         shell: bash
         env:
           SUPABASE_URL: https://kchjbqxdwdwzafzbivko.supabase.co

@@ -73,6 +73,32 @@ alter table public.brief_idea_expansions enable row level security;
 revoke all on table public.brief_cycles, public.brief_changes, public.brief_ideas, public.brief_idea_expansions from anon, authenticated;
 grant select on table public.brief_cycles, public.brief_changes, public.brief_ideas, public.brief_idea_expansions to anon, authenticated;
 create policy brief_cycles_public_read on public.brief_cycles for select to anon, authenticated using (status = 'completed');
-create policy brief_changes_public_read on public.brief_changes for select to anon, authenticated using (is_public = true);
-create policy brief_ideas_public_read on public.brief_ideas for select to anon, authenticated using (is_public = true);
-create policy brief_idea_expansions_public_read on public.brief_idea_expansions for select to anon, authenticated using (is_public = true);
+create policy brief_changes_public_read on public.brief_changes for select to anon, authenticated using (
+  is_public = true
+  and exists (
+    select 1 from public.brief_cycles
+    where brief_cycles.id = brief_changes.cycle_id
+      and brief_cycles.status = 'completed'
+  )
+);
+create policy brief_ideas_public_read on public.brief_ideas for select to anon, authenticated using (
+  is_public = true
+  and exists (
+    select 1
+    from public.brief_changes
+    join public.brief_cycles on brief_cycles.id = brief_changes.cycle_id
+    where brief_changes.id = brief_ideas.change_id
+      and brief_cycles.status = 'completed'
+  )
+);
+create policy brief_idea_expansions_public_read on public.brief_idea_expansions for select to anon, authenticated using (
+  is_public = true
+  and exists (
+    select 1
+    from public.brief_ideas
+    join public.brief_changes on brief_changes.id = brief_ideas.change_id
+    join public.brief_cycles on brief_cycles.id = brief_changes.cycle_id
+    where brief_ideas.id = brief_idea_expansions.idea_id
+      and brief_cycles.status = 'completed'
+  )
+);

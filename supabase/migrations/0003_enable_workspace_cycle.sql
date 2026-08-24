@@ -1,5 +1,6 @@
--- Initial cycle activation: one approved, source-grounded public source.
--- Provider credentials remain private worker environment variables.
+-- Approved source registration only. This migration intentionally leaves the
+-- worker disabled. Activation requires a separately reviewed operation after
+-- GitHub secrets, workflow controls, and a manual dry run are verified.
 
 insert into public.global_approved_sources (
   name,
@@ -23,9 +24,3 @@ where code = 'USA'
 on conflict (canonical_url) do update set
   is_enabled = true,
   updated_at = now();
-
-update public.global_refresh_configuration
-set is_enabled = true,
-    executor_status = 'ready',
-    updated_at = now()
-where id = true;

@@ -18,6 +18,7 @@
     "test": "vitest run",
     "lint": "prettier --check README.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md TRADEMARK.md docs deploy render.yaml supabase/migrations scripts client/index.html client/src server package.json tsconfig.json vite.config.ts vitest.config.ts",
     "validate:migrations": "node scripts/validate-migrations.mjs",
+    "validate:workspace-cycle": "node scripts/validate-workspace-cycle.mjs",
     "secret-scan": "node scripts/secret-scan.mjs",
     "independence-audit": "node scripts/independence-audit.mjs"
   },

@@ -50,6 +50,7 @@ jobs:
         shell: bash
         run: |
           pnpm validate:migrations
+          pnpm validate:workspace-cycle
           pnpm secret-scan
           pnpm independence-audit
           pnpm build
