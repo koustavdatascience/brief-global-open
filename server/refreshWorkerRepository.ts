@@ -1,4 +1,8 @@
 import type { GlobalCandidateExecution } from "./globalCandidateExecutor";
+import {
+  createServiceRoleFetch,
+  type ServiceRoleConfiguration,
+} from "./shared/serviceRoleFetch";
 
 export class RefreshWorkerRepositoryError extends Error {
   constructor(public readonly status: number) {
@@ -47,8 +51,6 @@ export type RefreshWorkerRepository = {
   }) => Promise<"created" | "existing">;
 };
 
-type ServiceRoleConfiguration = { supabaseUrl: string; serviceRoleKey: string };
-type ServiceFetch = (path: string, init?: RequestInit) => Promise<Response>;
 type SourceRow = {
   id: string;
   name: string;
@@ -59,25 +61,6 @@ type SourceRow = {
   fetch_config: Record<string, unknown>;
   jurisdictions: { code: string } | null;
 };
-
-function serviceRoleFetch(
-  configuration: ServiceRoleConfiguration,
-  request: typeof fetch = fetch
-): ServiceFetch {
-  return async (path, init = {}) => {
-    const response = await request(`${configuration.supabaseUrl}${path}`, {
-      ...init,
-      headers: {
-        apikey: configuration.serviceRoleKey,
-        Authorization: `Bearer ${configuration.serviceRoleKey}`,
-        "Content-Type": "application/json",
-        ...(init.headers ?? {}),
-      },
-    });
-    if (!response.ok) throw new RefreshWorkerRepositoryError(response.status);
-    return response;
-  };
-}
 
 function analysisPersistenceFields(execution: GlobalCandidateExecution) {
   if (execution.analysis.outcome.status === "accepted") {
@@ -118,7 +101,11 @@ export function createRefreshWorkerRepository(
   configuration: ServiceRoleConfiguration,
   request: typeof fetch = fetch
 ): RefreshWorkerRepository {
-  const serviceFetch = serviceRoleFetch(configuration, request);
+  const serviceFetch = createServiceRoleFetch(
+    configuration,
+    request,
+    status => new RefreshWorkerRepositoryError(status)
+  );
 
   async function findDocument(
     sourceId: string,

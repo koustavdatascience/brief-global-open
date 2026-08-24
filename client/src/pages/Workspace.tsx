@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BrandMark from "@/components/BrandMark";
 import { jsPDF } from "jspdf";
 import EditorialLabel from "@/components/EditorialLabel";

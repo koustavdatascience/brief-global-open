@@ -1,3 +1,4 @@
+import { postgrestIn } from "./shared/postgrest";
 import { supabasePublicFetch } from "./supabaseData";
 
 export type WorkspaceChangeType =
@@ -58,10 +59,6 @@ type PublicCycleRow = PublicWorkspace["cycle"];
 
 const CHANGE_LIMIT = 24;
 
-function inFilter(ids: string[]) {
-  return `(${ids.join(",")})`;
-}
-
 export async function listPublicWorkspace(): Promise<PublicWorkspace> {
   const cycleQuery = new URLSearchParams({
     select:
@@ -118,7 +115,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
 
   const ideaQuery = new URLSearchParams({
     select: "id,change_id,title,summary,rationale,confidence",
-    change_id: `in.${inFilter(changeIds)}`,
+    change_id: postgrestIn(changeIds),
     is_public: "eq.true",
     order: "created_at.asc",
     limit: String(CHANGE_LIMIT),
@@ -144,7 +141,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
 
   const expansionQuery = new URLSearchParams({
     select: "idea_id,body_markdown,generated_at",
-    idea_id: `in.${inFilter(ideaIds)}`,
+    idea_id: postgrestIn(ideaIds),
     is_public: "eq.true",
     order: "generated_at.desc",
     limit: String(CHANGE_LIMIT),

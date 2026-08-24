@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   executeGlobalCandidateAnalysis,
-  GlobalCandidateExecutorError,
   MAX_GLOBAL_CANDIDATE_SOURCE_BYTES,
 } from "./globalCandidateExecutor";
 

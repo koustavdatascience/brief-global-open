@@ -7,22 +7,16 @@ import {
   CircleDot,
   Code2,
   Eye,
-  GitFork,
   GitPullRequest,
   MoreHorizontal,
   Plus,
   ShieldCheck,
-  Star,
   BookOpen,
   Check,
   GitBranch,
-  Globe2,
-  Layers3,
   Link2,
-  LockKeyhole,
   Radar,
   Search,
-  Sparkles,
   TimerReset,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -269,8 +263,6 @@ export function HeroPreview() {
 }
 
 function WorkflowVisual({ item }: { item: WorkflowItem }) {
-  const Icon = item.icon;
-
   if (item.id === "signals") {
     return (
       <div className="relative h-full min-h-[25rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#090b10] p-5 sm:p-7">

@@ -1,4 +1,3 @@
-import React from "react";
 import { Fingerprint, LockKeyhole, Radar } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";

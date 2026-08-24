@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BrandMark from "@/components/BrandMark";
 import EditorialLabel from "@/components/EditorialLabel";
 import {

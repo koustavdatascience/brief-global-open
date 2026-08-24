@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { PolicySignalSchema } from "./extractionContract";
 import {
   generateWorkspaceExpansion,
@@ -7,8 +6,14 @@ import {
 } from "./briefWorkspaceAi";
 import { parseRefreshWorkerEnv, runDailyRefreshWorker } from "./refreshWorker";
 import { createRefreshWorkerRepository } from "./refreshWorkerRepository";
+import { indiaCalendarDate, INDIA_TIMEZONE } from "./shared/indiaCalendar";
+import { postgrestIn } from "./shared/postgrest";
+import {
+  createServiceRoleFetch,
+  type ServiceFetch,
+  type ServiceRoleConfiguration,
+} from "./shared/serviceRoleFetch";
 
-const WORKSPACE_CYCLE_TIMEZONE = "Asia/Kolkata";
 const MAX_WORKSPACE_CHANGES = 12;
 const MIN_AUTOMATIC_PUBLICATION_CONFIDENCE = 0.8;
 
@@ -18,9 +23,6 @@ class WorkspaceWorkerError extends Error {
     this.name = "WorkspaceWorkerError";
   }
 }
-
-type ServiceConfiguration = { supabaseUrl: string; serviceRoleKey: string };
-type ServiceFetch = (path: string, init?: RequestInit) => Promise<Response>;
 
 type CandidateRow = {
   id: string;
@@ -49,40 +51,12 @@ type JurisdictionRow = {
   code: string;
 };
 
-function serviceRoleFetch(
-  configuration: ServiceConfiguration,
-  request: typeof fetch = fetch
-): ServiceFetch {
-  return async (path, init = {}) => {
-    const response = await request(`${configuration.supabaseUrl}${path}`, {
-      ...init,
-      headers: {
-        apikey: configuration.serviceRoleKey,
-        Authorization: `Bearer ${configuration.serviceRoleKey}`,
-        "Content-Type": "application/json",
-        ...(init.headers ?? {}),
-      },
-    });
-
-    if (!response.ok) throw new WorkspaceWorkerError(response.status);
-    return response;
-  };
-}
-
 async function jsonRows<T>(request: ServiceFetch, path: string): Promise<T[]> {
   return (await (await request(path)).json()) as T[];
 }
 
 function cycleKey(now: Date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: WORKSPACE_CYCLE_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find(part => part.type === type)?.value ?? "00";
-  return `brief-workspace-cycle:${value("year")}-${value("month")}-${value("day")}`;
+  return `brief-workspace-cycle:${indiaCalendarDate(now)}`;
 }
 
 function changeType(signalType: string) {
@@ -98,10 +72,6 @@ function importance(confidence: number) {
   if (confidence >= 0.8) return "material" as const;
   if (confidence >= 0.65) return "notable" as const;
   return "watch" as const;
-}
-
-function inFilter(values: string[]) {
-  return `in.(${values.join(",")})`;
 }
 
 async function findOrCreateCycle(
@@ -121,7 +91,7 @@ async function findOrCreateCycle(
     body: JSON.stringify({
       cycle_key: input.key,
       scheduled_for: input.scheduledFor,
-      timezone: WORKSPACE_CYCLE_TIMEZONE,
+      timezone: INDIA_TIMEZONE,
       status: "running",
       source_count: input.sourceCount,
     }),
@@ -167,7 +137,7 @@ async function markCycleFailed(
 }
 
 export async function materializeWorkspaceCycle(input: {
-  configuration: ServiceConfiguration;
+  configuration: ServiceRoleConfiguration;
   runId: string;
   cycleKey: string;
   scheduledFor: string;
@@ -176,7 +146,11 @@ export async function materializeWorkspaceCycle(input: {
   generateIdea?: typeof generateWorkspaceIdea;
   generateExpansion?: typeof generateWorkspaceExpansion;
 }) {
-  const request = serviceRoleFetch(input.configuration, input.request);
+  const request = createServiceRoleFetch(
+    input.configuration,
+    input.request,
+    status => new WorkspaceWorkerError(status)
+  );
   let cycleId: string | undefined;
   try {
     const candidates = await jsonRows<CandidateRow>(
@@ -190,7 +164,7 @@ export async function materializeWorkspaceCycle(input: {
     const documents = documentIds.length
       ? await jsonRows<DocumentRow>(
           request,
-          `/rest/v1/global_refresh_documents?select=id,source_id,official_record_url,published_at,content_sha256&id=${inFilter(documentIds)}&limit=${MAX_WORKSPACE_CHANGES}`
+          `/rest/v1/global_refresh_documents?select=id,source_id,official_record_url,published_at,content_sha256&id=${postgrestIn(documentIds)}&limit=${MAX_WORKSPACE_CHANGES}`
         )
       : [];
     const sourceIds = [
@@ -199,7 +173,7 @@ export async function materializeWorkspaceCycle(input: {
     const sources = sourceIds.length
       ? await jsonRows<SourceRow>(
           request,
-          `/rest/v1/global_approved_sources?select=id,name,jurisdiction_id,is_enabled&id=${inFilter(sourceIds)}&is_enabled=eq.true&limit=${MAX_WORKSPACE_CHANGES}`
+          `/rest/v1/global_approved_sources?select=id,name,jurisdiction_id,is_enabled&id=${postgrestIn(sourceIds)}&is_enabled=eq.true&limit=${MAX_WORKSPACE_CHANGES}`
         )
       : [];
     const jurisdictionIds = [
@@ -208,7 +182,7 @@ export async function materializeWorkspaceCycle(input: {
     const jurisdictions = jurisdictionIds.length
       ? await jsonRows<JurisdictionRow>(
           request,
-          `/rest/v1/jurisdictions?select=id,code&id=${inFilter(jurisdictionIds)}&limit=${MAX_WORKSPACE_CHANGES}`
+          `/rest/v1/jurisdictions?select=id,code&id=${postgrestIn(jurisdictionIds)}&limit=${MAX_WORKSPACE_CHANGES}`
         )
       : [];
     const documentsById = new Map(
