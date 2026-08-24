@@ -86,7 +86,7 @@ export default function Discover() {
 
   return (
     <main className="min-h-screen bg-[var(--brief-paper)] text-[var(--brief-ink)]">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10">
+      <header className="mx-auto flex w-full items-center justify-between gap-4 px-6 py-5 sm:px-10 lg:px-16 xl:px-20">
         <Link href="/" aria-label="Brief home">
           <BrandMark />
         </Link>
@@ -98,11 +98,11 @@ export default function Discover() {
         </Link>
       </header>
 
-      <section className="mx-auto max-w-6xl px-5 pb-12 pt-8 sm:px-8 sm:pb-16 lg:px-10">
+      <section className="mx-auto w-full px-6 pb-12 pt-8 sm:px-10 sm:pb-16 lg:px-16 xl:px-20">
         <EditorialLabel>Global discovery</EditorialLabel>
-        <div className="mt-5 grid gap-8 border-b border-[var(--brief-rule)] pb-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
+        <div className="mt-5 grid gap-10 border-b border-[var(--brief-rule)] pb-12 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
           <div>
-            <h1 className="max-w-3xl font-display text-5xl leading-[0.94] tracking-[-0.05em] sm:text-6xl">
+            <h1 className="max-w-5xl font-display text-5xl leading-[0.94] tracking-[-0.05em] sm:text-6xl lg:text-[4.5rem]">
               Policy change, in{" "}
               <em className="font-normal text-[var(--brief-accent)]">
                 context.
@@ -126,7 +126,7 @@ export default function Discover() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-16 sm:px-8 lg:px-10">
+      <section className="mx-auto w-full px-6 pb-16 sm:px-10 lg:px-16 xl:px-20">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--brief-rule)] pb-4">
           <div>
             <EditorialLabel>Latest signals</EditorialLabel>
@@ -173,7 +173,7 @@ export default function Discover() {
         <div className="divide-y divide-[var(--brief-rule)]">
           {signals.map(signal => (
             <article
-              className="grid gap-5 py-7 sm:grid-cols-[9rem_minmax(0,1fr)_auto] sm:items-start"
+              className="grid gap-5 py-8 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-start lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
               key={signal.id}
             >
               <div className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--brief-muted)]">
@@ -201,10 +201,10 @@ export default function Discover() {
                     {signal.signal_type.replace("_", " ")}
                   </span>
                 </div>
-                <h2 className="mt-3 max-w-2xl font-display text-2xl leading-tight tracking-[-0.025em]">
+                <h2 className="mt-3 max-w-5xl font-display text-2xl leading-tight tracking-[-0.025em] sm:text-[2rem]">
                   {signal.headline}
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--brief-muted)]">
+                <p className="mt-2 max-w-4xl text-sm leading-6 text-[var(--brief-muted)]">
                   {signal.summary}
                 </p>
               </div>

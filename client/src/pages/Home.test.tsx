@@ -10,8 +10,8 @@ describe("Home", () => {
     expect(html).toContain("Know the change.");
     expect(html).toContain("Make the call.");
     expect(html).toContain("Global policy intelligence");
-    expect(html).toContain("Less to scan");
-    expect(html).toContain("Evidence stays close");
+    expect(html).toContain("Built for the full policy workflow.");
+    expect(html).toContain("The public stack. Directly from GitHub.");
     expect(html).toContain("Browse what matters. Keep the source close.");
     expect(html).toContain("No account is required.");
     expect(html).not.toContain("Free to use");
