@@ -39,8 +39,10 @@ describe("BriefLandingSections", () => {
 
     expect(html).toContain("Explore");
     expect(html).toContain("Global discovery");
-    expect(html).toContain("May");
-    expect(html).toContain("2026");
+    expect(html).toContain("brief-workspace-preview.png");
+    expect(html).toContain(
+      "Brief workspace showing organized policy changes and next-cycle insights"
+    );
     expect(html).toContain("Explore first");
     expect(html).toContain("Browse what matters. Keep the source close.");
   });
