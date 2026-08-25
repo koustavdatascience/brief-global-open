@@ -125,10 +125,18 @@ export function ReferenceHeroPreview() {
   return (
     <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 aspect-[2.215] w-full overflow-hidden rounded-[1.1rem] border border-white/10 bg-[#d0d0cc] shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
       <img
-        alt="Brief workspace preview"
+        alt=""
+        aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
         src="/brief-workspace-reference.png"
       />
+      <div className="absolute left-1/2 top-[14%] h-[72%] w-[86%] -translate-x-1/2 overflow-hidden rounded-[0.7rem] border border-white/20 bg-[#07080b] shadow-[0_18px_55px_rgba(0,0,0,0.55)] sm:top-[14%] sm:h-[72%] sm:w-[70%]">
+        <img
+          alt="Brief workspace page preview"
+          className="h-full w-full object-cover object-center"
+          src="/brief-workspace-page.png"
+        />
+      </div>
     </div>
   );
 }

@@ -39,8 +39,9 @@ describe("BriefLandingSections", () => {
 
     expect(html).toContain("Explore");
     expect(html).toContain("Global discovery");
-    expect(html).toContain("Brief workspace preview");
+    expect(html).toContain("Brief workspace page preview");
     expect(html).toContain("/brief-workspace-reference.png");
+    expect(html).toContain("/brief-workspace-page.png");
     expect(html).toContain("Explore first");
     expect(html).toContain("Browse what matters. Keep the source close.");
   });
