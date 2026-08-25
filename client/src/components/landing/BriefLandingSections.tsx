@@ -124,11 +124,40 @@ export function BriefNavigation() {
 export function ReferenceHeroPreview() {
   return (
     <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 aspect-[2.215] w-full overflow-hidden rounded-[1.1rem] border border-white/10 bg-[#d0d0cc] shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
-      <img
-        alt="Brief workspace preview"
-        className="absolute inset-0 h-full w-full object-cover"
-        src="/brief-workspace-reference.png"
+      <div className="brief-reference-landscape" aria-hidden="true" />
+      <div className="brief-reference-haze" aria-hidden="true" />
+      <div
+        className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+        aria-hidden="true"
       />
+      <div className="absolute left-1/2 top-[8%] w-[16%] min-w-[12rem] max-w-[17rem] -translate-x-1/2 rounded-[1.7rem] border-[0.55rem] border-[#090a0d] bg-[#07080b] p-2 shadow-[0_18px_55px_rgba(0,0,0,0.6)] sm:top-[8%] sm:w-[16%] sm:min-w-[13rem]">
+        <div className="rounded-[1.1rem] border border-white/10 bg-[#11151c] px-3 pb-5 pt-3 sm:px-4 sm:pb-7 sm:pt-4">
+          <div className="flex items-center gap-2 rounded-full bg-white/[0.08] px-2.5 py-1.5 font-mono text-[0.43rem] text-white/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#aeb9ff]" />
+            Public signal recap is ready.
+          </div>
+          <p className="mt-7 font-mono text-[0.45rem] uppercase tracking-[0.16em] text-[#aeb9ff]">
+            European Union
+          </p>
+          <p className="mt-2 text-left text-[2rem] font-medium leading-[0.9] tracking-[-0.08em] text-white sm:text-[2.7rem]">
+            May
+            <span className="block text-white/45">2026</span>
+          </p>
+          <div className="mt-8 flex h-28 items-end justify-between gap-2 border-b border-white/10 px-1 sm:h-36">
+            {[18, 31, 24, 45, 39, 62, 78].map((height, index) => (
+              <span
+                className={`w-px ${index === 6 ? "bg-[#b85536]" : "bg-white/65"}`}
+                key={height}
+                style={{ height: `${height}%` }}
+              />
+            ))}
+          </div>
+          <div className="mt-5 flex items-center justify-between font-mono text-[0.43rem] uppercase tracking-[0.12em] text-white/35">
+            <span>Signal totals</span>
+            <span>Source linked</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
