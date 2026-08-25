@@ -1039,9 +1039,8 @@ export function AccessInvitation() {
   return (
     <section
       id="discover"
-      className="relative overflow-hidden border-t border-white/10 bg-[#090b10] text-white"
+      className="relative overflow-hidden border-t border-white/10 bg-black text-white"
     >
-      <div className="brief-cta-glow" aria-hidden="true" />
       <div className="relative mx-auto grid w-full max-w-[1240px] gap-10 px-6 py-20 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-28">
         <div>
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#aeb9ff]">

@@ -252,22 +252,6 @@
   box-shadow: 0 0 45px rgba(113, 132, 255, 0.22);
 }
 
-.brief-cta-glow {
-  position: absolute;
-  right: 8%;
-  top: 50%;
-  width: 28rem;
-  height: 28rem;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    rgba(113, 132, 255, 0.18),
-    transparent 68%
-  );
-  filter: blur(16px);
-  transform: translateY(-50%);
-}
-
 .brief-reference-preview {
   isolation: isolate;
   min-height: 18rem;
