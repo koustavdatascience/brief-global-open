@@ -126,6 +126,10 @@ export function ReferenceHeroPreview() {
         className="block h-auto w-full"
         src="/brief-workspace-preview.png"
       />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[24%] bg-gradient-to-b from-transparent via-[#07080b]/45 to-[#07080b] sm:h-[22%]"
+      />
     </div>
   );
 }
