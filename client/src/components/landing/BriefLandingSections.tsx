@@ -91,9 +91,6 @@ export function BriefNavigation() {
         aria-label="Public navigation"
         className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-[0.7rem] font-normal text-white/45 lg:flex"
       >
-        <a className="transition-colors hover:text-white" href="/workspace">
-          Explore
-        </a>
         <a className="transition-colors hover:text-white" href="#method">
           Signals
         </a>
