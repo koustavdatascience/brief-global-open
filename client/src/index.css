@@ -103,6 +103,10 @@
   .ib-reveal-delay-3 {
     animation-delay: 180ms;
   }
+  .blurred-stagger__word {
+    display: inline-block;
+    white-space: nowrap;
+  }
   .blurred-stagger__char {
     display: inline-block;
     opacity: 0;

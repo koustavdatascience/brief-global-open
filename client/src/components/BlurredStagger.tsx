@@ -21,6 +21,26 @@ export default function BlurredStagger<T extends ElementType = "span">({
   ...props
 }: BlurredStaggerProps<T>) {
   const Tag = (as ?? "span") as ElementType;
+  let characterIndex = 0;
+
+  const renderCharacter = (character: string) => {
+    const index = characterIndex;
+    characterIndex += 1;
+
+    return (
+      <span
+        className="blurred-stagger__char"
+        key={`${character}-${index}`}
+        style={
+          {
+            "--blurred-stagger-delay": `${delay + index * stagger}ms`,
+          } as CSSProperties
+        }
+      >
+        {character}
+      </span>
+    );
+  };
 
   return (
     <Tag
@@ -29,25 +49,21 @@ export default function BlurredStagger<T extends ElementType = "span">({
       className={className ? `blurred-stagger ${className}` : "blurred-stagger"}
     >
       <span aria-hidden="true" className="blurred-stagger__visual">
-        {[...children].map((character, index) => (
-          <span
-            className="blurred-stagger__char"
-            key={`${character}-${index}`}
-            style={
-              {
-                "--blurred-stagger-delay": `${delay + index * stagger}ms`,
-              } as CSSProperties
-            }
-          >
-            {character === "\n" ? (
-              <br />
-            ) : character === " " ? (
-              "\u00a0"
-            ) : (
-              character
-            )}
-          </span>
-        ))}
+        {children.split(/(\s+)/).map((token, tokenIndex) =>
+          /^\s+$/.test(token) ? (
+            [...token].map((character, characterIndexInToken) =>
+              character === "\n" ? (
+                <br key={`break-${tokenIndex}-${characterIndexInToken}`} />
+              ) : (
+                renderCharacter("\u00a0")
+              )
+            )
+          ) : (
+            <span className="blurred-stagger__word" key={`word-${tokenIndex}`}>
+              {[...token].map(renderCharacter)}
+            </span>
+          )
+        )}
       </span>
     </Tag>
   );
