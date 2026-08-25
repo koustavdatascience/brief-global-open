@@ -254,19 +254,11 @@
 
 .brief-reference-preview {
   isolation: isolate;
-  min-height: 18rem;
 }
 
 .brief-reference-trust {
   color: rgba(255, 255, 255, 0.5);
   filter: grayscale(1);
-}
-
-@media (max-width: 640px) {
-  .brief-reference-preview {
-    aspect-ratio: 0.98;
-    min-height: 25rem;
-  }
 }
 
 :root {
