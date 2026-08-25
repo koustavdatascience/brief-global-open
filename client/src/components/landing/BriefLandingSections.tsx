@@ -120,10 +120,10 @@ export function BriefNavigation() {
 
 export function ReferenceHeroPreview() {
   return (
-    <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 aspect-[2.215] w-full overflow-hidden rounded-[1.1rem] border-0 bg-black shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
+    <div className="brief-reference-preview ib-reveal ib-reveal-delay-3 relative mx-auto mt-12 w-full overflow-hidden rounded-[1.1rem] border-0 bg-black shadow-[0_38px_110px_rgba(0,0,0,0.45)] sm:mt-14">
       <img
         alt="Brief workspace showing organized policy changes and next-cycle insights"
-        className="absolute inset-0 h-full w-full object-cover object-top"
+        className="block h-auto w-full"
         src="/brief-workspace-preview.png"
       />
     </div>
