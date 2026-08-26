@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import BrandMark from "@/components/BrandMark";
+import BlurredStagger from "@/components/BlurredStagger";
 import { jsPDF } from "jspdf";
 import EditorialLabel from "@/components/EditorialLabel";
 import {
@@ -671,13 +672,16 @@ export default function Workspace() {
           <div>
             <EditorialLabel>Brief workspace</EditorialLabel>
             <h1 className="mt-5 max-w-5xl text-5xl font-medium leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-[5rem]">
-              Policy changes, organized into what you can do next.
+              <BlurredStagger as="span" delay={80} stagger={18}>
+                {"Policy changes, organized into what you can do next."}
+              </BlurredStagger>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/55">
-              Every Sunday, Wednesday, and Friday, Brief refreshes this public
-              workspace with source-linked changes, grouped by policy type and
-              subject area, and grounded project ideas for people watching
-              policy, software, and markets together.
+              <BlurredStagger as="span" delay={520} stagger={12}>
+                {
+                  "Every Sunday, Wednesday, and Friday, Brief refreshes this public workspace with source-linked changes, grouped by policy type and subject area, and grounded project ideas for people watching policy, software, and markets together."
+                }
+              </BlurredStagger>
             </p>
           </div>
           <aside className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
