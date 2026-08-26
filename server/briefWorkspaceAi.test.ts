@@ -120,6 +120,71 @@ describe("workspace AI provider rotation", () => {
     expect(calls).toHaveLength(5);
   });
 
+  it("advances after a valid-but-incomplete PRD and accepts a later complete result", async () => {
+    const headings = [
+      "Plain-language context",
+      "What changed",
+      "Why it matters",
+      "Product concept",
+      "System boundary and architecture",
+      "Users and operating model",
+      "Core workflow and state",
+      "Data model and evidence lineage",
+      "Integrations and interfaces",
+      "Security, compliance, and controls",
+      "Observability and operations",
+      "Deployment topology",
+      "MVP vertical slice",
+      "Scale and evolution",
+      "Economic logic",
+      "Risks and constraints",
+      "First 30 days",
+      "Official source",
+    ];
+    const completePrd = headings
+      .map(
+        heading =>
+          `## ${heading}\n${"This proposed workflow uses source-linked evidence, explicit ownership, controlled transitions, and measurable recovery outcomes. ".repeat(4)}`
+      )
+      .join("\n");
+    const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
+    const request: typeof fetch = async (input, init) => {
+      const body = JSON.parse(String(init?.body ?? "{}")) as Record<
+        string,
+        unknown
+      >;
+      calls.push({ url: String(input), body });
+      if (calls.length === 1)
+        return geminiResponse({
+          body_markdown: "## Plain-language context\\nToo short",
+        });
+      if (calls.length <= 4) return chatResponse({}, 429);
+      return chatResponse({ body_markdown: completePrd });
+    };
+
+    const result = await generateWorkspaceExpansion(
+      change,
+      {
+        title: "Policy Evidence Control Plane",
+        summary:
+          "A source-linked workflow system that maps policy evidence to accountable operational decisions.",
+        rationale:
+          "It reduces repeated review work while preserving evidence lineage, approval controls, and measurable operational outcomes.",
+      },
+      { fetch: request, configuration: () => configuration }
+    );
+
+    expect(result?.modelId).toBe("openai/gpt-oss-20b");
+    expect(result?.body_markdown).toContain(
+      "## System boundary and architecture"
+    );
+    expect(calls).toHaveLength(5);
+    expect(calls[0]?.body.generationConfig).toMatchObject({
+      maxOutputTokens: 7200,
+    });
+    expect(calls[4]?.body.max_tokens).toBe(7200);
+  });
+
   it("keeps the Groq model configurable while defaulting it for existing deployments", () => {
     const result = readWorkspaceAiConfiguration({
       GEMINI_API_KEY: "gemini",
