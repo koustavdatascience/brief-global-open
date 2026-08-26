@@ -1,5 +1,7 @@
 # Direct Provider Contract Notes
 
+The generation quality bar is a production design brief rather than a generic project suggestion. Brief should propose a serious system only when the source creates a defensible operational, market, or economic problem. The reference quality bar is an end-to-end workflow that can combine source ingestion, classification, remediation, CI or runtime verification, evidence history, exports, scheduled monitoring, and a hosted/self-hosted boundary where relevant. The model must narrow or reject an idea when the source cannot support that level of specificity.
+
 **Status:** implementation research only. No credentials were added, no provider request was made, and no refresh run, schedule, or publication was activated.
 
 Brief will send the same bounded, source-grounded prompt and JSON schema to each provider from a server-only worker. The browser will never receive a provider key, raw source text, candidate payload, or provider response. Each provider result must still pass local Zod validation through `parseStructuredExtraction`; provider-side schema features are a formatting aid, not an editorial approval mechanism.
@@ -18,7 +20,7 @@ OpenRouter documents Bearer-token authentication, model-level fallbacks, and str
 
 Groq documents an OpenAI-compatible base URL and strict structured-output mode. Strict mode requires every object’s `additionalProperties` to be `false` and every field to be required; Brief’s current schema needs a provider-specific normalization for nullable fields before it can safely use that mode. [5] [6]
 
-An **accepted** extraction terminates the fallback chain. For global extraction, an abstention, invalid JSON, schema mismatch, missing evidence, or low-confidence result also terminates the chain and is persisted as a non-public review outcome; provider failures alone move to the next model. Workspace idea and expansion generation additionally tries the next free model when a response cannot be parsed, then uses its grounded fallback. This prevents a later model from overriding a valid safety or evidence abstention. No provider output can directly create a `public_signals` row.
+An **accepted** extraction terminates the fallback chain. For global extraction, an abstention, invalid JSON, schema mismatch, missing evidence, or low-confidence result also terminates the chain and is persisted as a non-public review outcome; provider failures alone move to the next model. Workspace idea and expansion generation tries the next free model when a provider is unavailable, rate-limited, times out, returns malformed JSON, or fails the local schema/quality gate. It then tries the configured Groq fallback before using a grounded deterministic fallback. Expansion output must contain the full implementation-ready PRD structure, including operating model, architecture, workflow state, evidence lineage, integrations, security, observability, deployment topology, MVP vertical slice, scale path, economics, risks, and source. This prevents a provider outage or shallow response from silently degrading the product. A later model may replace an invalid generation, but it cannot override a valid safety or evidence abstention in the global extraction path. No provider output can directly create a `public_signals` row.
 
 ## References
 
