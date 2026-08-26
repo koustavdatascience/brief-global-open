@@ -330,8 +330,8 @@ export default function Docs() {
           </div>
 
           <div className="mt-10 flex flex-col gap-3 border-t border-[var(--brief-rule)] pt-6 text-xs text-[var(--brief-muted)] sm:flex-row sm:items-center sm:justify-between">
-            <span>Brief — global policy intelligence</span>
-            <span>Built in the open by Koustav Datascience</span>
+            <span>Brief global policy intelligence</span>
+            <span>Built by Koustav</span>
           </div>
         </div>
       </section>
