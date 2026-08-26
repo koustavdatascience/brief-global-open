@@ -17,5 +17,10 @@ describe("Docs", () => {
     expect(html).toContain("Report an issue");
     expect(html).toContain("koustavdatascience@gmail.com");
     expect(html).toContain("SECURITY.md");
+    expect(html).toContain("Common questions, answered plainly.");
+    expect(html).toContain("What is Brief?");
+    expect(html).toContain("When does the workspace refresh?");
+    expect(html).toContain('aria-expanded="true"');
+    expect(html).toContain('aria-controls="faq-answer-0"');
   });
 });

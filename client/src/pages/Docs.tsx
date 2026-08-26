@@ -1,8 +1,10 @@
+import { useState } from "react";
 import {
   ArrowUpRight,
   BookOpen,
   Bug,
   Check,
+  ChevronDown,
   Github,
   Mail,
   ShieldCheck,
@@ -56,7 +58,42 @@ const principles = [
   ],
 ] as const;
 
+const frequentlyAsked = [
+  {
+    question: "What is Brief?",
+    answer:
+      "Brief is an account-free public workspace that turns selected, source-linked policy movement into clear context for people following policy, software, and markets together.",
+  },
+  {
+    question: "When does the workspace refresh?",
+    answer:
+      "The scheduled workspace is intended to refresh every Sunday, Wednesday, and Friday at 09:00 IST in the Asia/Kolkata timezone. A scheduled run may start later if the automation provider queues it.",
+  },
+  {
+    question: "Are Brief’s summaries the official policy record?",
+    answer:
+      "No. Brief provides a concise orientation layer. The linked official publication is the authority, and readers should open it before making legal, operational, tax, investment, or compliance decisions.",
+  },
+  {
+    question: "Why do some policy changes have no project idea?",
+    answer:
+      "Brief only proposes an idea when the policy creates a defensible, specific opportunity for a serious system. Weak, purely administrative, or insufficiently grounded opportunities are intentionally left without an idea.",
+  },
+  {
+    question: "How can I report an incorrect source or technical issue?",
+    answer:
+      "Use the Report an issue link above for a broken page, source concern, unclear explanation, or reproducible technical problem. Include the affected URL, source, and steps to reproduce when possible.",
+  },
+  {
+    question: "How should I report a security vulnerability?",
+    answer:
+      "Do not publish credentials, personal data, raw private policy material, or sensitive exploit details in a public issue. Follow the private reporting guidance in the repository security policy or contact the owner privately.",
+  },
+] as const;
+
 export default function Docs() {
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
   return (
     <main className="min-h-screen bg-[var(--brief-paper)] text-[var(--brief-ink)]">
       <header className="mx-auto flex w-full items-center justify-between gap-5 px-6 py-5 sm:px-10 lg:px-16 xl:px-20">
@@ -295,6 +332,58 @@ export default function Docs() {
           <div className="mt-10 flex flex-col gap-3 border-t border-[var(--brief-rule)] pt-6 text-xs text-[var(--brief-muted)] sm:flex-row sm:items-center sm:justify-between">
             <span>Brief — global policy intelligence</span>
             <span>Built in the open by Koustav Datascience</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--brief-rule)] bg-[var(--brief-paper)]">
+        <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-6 py-16 sm:px-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-16 lg:py-24 xl:px-20">
+          <div>
+            <EditorialLabel>FAQ</EditorialLabel>
+            <h2 className="mt-4 max-w-md font-display text-3xl font-medium leading-tight tracking-[-0.045em] sm:text-4xl">
+              Common questions, answered plainly.
+            </h2>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-[var(--brief-muted)]">
+              If your question is not covered here, send feedback through the
+              contact options above.
+            </p>
+          </div>
+
+          <div className="border-t border-[var(--brief-rule)]">
+            {frequentlyAsked.map((item, index) => {
+              const isOpen = openFaq === index;
+              const answerId = `faq-answer-${index}`;
+              return (
+                <div
+                  className="border-b border-[var(--brief-rule)]"
+                  key={item.question}
+                >
+                  <button
+                    aria-controls={answerId}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-center justify-between gap-6 py-5 text-left text-sm font-semibold tracking-[-0.015em] transition hover:text-[var(--brief-accent)]"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    type="button"
+                  >
+                    <span>{item.question}</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`h-4 w-4 shrink-0 text-[var(--brief-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  <div
+                    className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                    id={answerId}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <p className="max-w-2xl pb-5 pr-10 text-sm leading-6 text-[var(--brief-muted)]">
+                        {item.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
