@@ -1,3 +1,5 @@
+import type { WorkspaceTopic } from "../../../shared/workspaceTopics";
+
 export type PublicJurisdiction = {
   id: string;
   code: string;
@@ -51,6 +53,7 @@ export type PublicWorkspace = {
     canonical_url: string;
     published_at: string;
     source_name: string;
+    topics: WorkspaceTopic[];
     jurisdiction: {
       code: string;
       name: string;

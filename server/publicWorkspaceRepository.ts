@@ -1,4 +1,5 @@
 import { postgrestIn } from "./shared/postgrest";
+import type { WorkspaceTopic } from "../shared/workspaceTopics";
 import { supabasePublicFetch } from "./supabaseData";
 
 export type WorkspaceChangeType =
@@ -13,6 +14,7 @@ export type PublicWorkspaceChange = {
   canonical_url: string;
   published_at: string;
   source_name: string;
+  topics: WorkspaceTopic[];
   jurisdiction: {
     code: string;
     name: string;
@@ -88,7 +90,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
 
   const changeQuery = new URLSearchParams({
     select:
-      "id,headline,summary,change_type,importance,canonical_url,published_at,source_name,jurisdiction:jurisdictions(code,name,region,flag_emoji)",
+      "id,headline,summary,change_type,importance,canonical_url,published_at,source_name,topics,jurisdiction:jurisdictions(code,name,region,flag_emoji)",
     cycle_id: `eq.${cycle.id}`,
     is_public: "eq.true",
     order: "published_at.desc",

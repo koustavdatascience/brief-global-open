@@ -112,6 +112,22 @@ async function materialize(
 }
 
 describe("workspace automatic publication", () => {
+  it("writes deterministic topic tags with an accepted source-backed change", async () => {
+    const { result, requests } = await materialize({});
+
+    await expect(result).resolves.toMatchObject({
+      changeCount: 1,
+      ideaCount: 0,
+    });
+    const changeWrite = requests.find(
+      entry =>
+        entry.path.includes("/brief_changes") && entry.init?.method === "POST"
+    );
+    expect(changeWrite?.init?.body).toContain(
+      '"topics":["corporate_business"]'
+    );
+  });
+
   it("holds an accepted candidate below the stricter automatic-publication threshold", async () => {
     const { result, requests } = await materialize({
       candidatePayloads: [signal(0.79)],

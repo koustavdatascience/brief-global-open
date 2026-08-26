@@ -8,6 +8,7 @@ import { parseRefreshWorkerEnv, runDailyRefreshWorker } from "./refreshWorker";
 import { createRefreshWorkerRepository } from "./refreshWorkerRepository";
 import { indiaCalendarDate, INDIA_TIMEZONE } from "./shared/indiaCalendar";
 import { postgrestIn } from "./shared/postgrest";
+import { classifyWorkspaceTopics } from "../shared/workspaceTopics";
 import {
   createServiceRoleFetch,
   type ServiceFetch,
@@ -238,6 +239,10 @@ export async function materializeWorkspaceCycle(input: {
             summary: signal.summary.slice(0, 2000),
             change_type: changeType(signal.signalType),
             importance: importance(signal.confidence),
+            topics: classifyWorkspaceTopics({
+              headline: signal.headline,
+              summary: signal.summary,
+            }),
             canonical_url: document.official_record_url,
             published_at: document.published_at ?? input.scheduledFor,
             source_name: source.name.slice(0, 180),

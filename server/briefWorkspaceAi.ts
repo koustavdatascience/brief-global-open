@@ -6,8 +6,8 @@ import {
 } from "./openRouterModels";
 
 const PROVIDER_TIMEOUT_MS = 30_000;
-const IDEA_PROMPT_VERSION = "idea-v1";
-const EXPANSION_PROMPT_VERSION = "expansion-v2";
+const IDEA_PROMPT_VERSION = "idea-v2-systems";
+const EXPANSION_PROMPT_VERSION = "expansion-v3-systems";
 
 export const DEFAULT_WORKSPACE_GEMINI_MODEL = "gemini-2.5-flash";
 export const DEFAULT_WORKSPACE_OPENROUTER_MODEL = DEFAULT_FREE_OPENROUTER_MODEL;
@@ -255,41 +255,52 @@ ${idea.summary}
 
 ## Target users
 
-- Teams that monitor policy and compliance changes.
-- Product, operations, and finance leaders who need to translate official updates into practical decisions.
-- Analysts and developers who need a source-linked starting point for further research.
+- Compliance, policy, product, operations, engineering, and finance teams that own the affected workflow.
+- External reviewers, counsel, auditors, suppliers, or regulated counterparties where the source requires evidence exchange.
+- Platform administrators responsible for access, retention, integrations, and operational reliability.
 
-## Core user workflow
+## System boundary and architecture
 
-- Capture the official notice and preserve its source link.
-- Explain the change in plain language and identify the affected workflow.
-- Track follow-up tasks, owners, dates, and evidence.
-- Review the operational and economic implications before deciding whether to build.
+The proposed system should sit between authoritative policy sources and the organization’s operational workflow. Its core modules are a source-ingestion and versioning service, a normalized policy/evidence store, a workflow orchestration service, a review and approval service, an integration gateway, and an audit/observability layer. Ingestion creates a versioned source record; normalization links obligations or assumptions to affected entities; workflow tasks move through review states; approved outputs are delivered to downstream systems or exported. The system should be event-aware so source amendments, expired evidence, failed integrations, and overdue reviews can trigger controlled re-evaluation.
 
-## MVP scope
+## Core user workflow and state
 
-- Source-linked notice record with a plain-language explanation.
-- Structured change summary, affected workflow, and review checklist.
-- Evidence trail and exportable brief for internal discussion.
+A record moves through captured, classified, evidence-required, in-review, approved, rejected, superseded, and archived states. A user captures the official notice, maps it to an operational object, attaches evidence, assigns reviewers, resolves exceptions, and approves a bounded action. No automated state should imply legal approval; high-impact transitions require an accountable human decision.
 
-## Data and implementation
+## Data model and evidence lineage
 
-Use the official notice as the primary record, store a versioned interpretation separately, and keep every generated claim traceable to the source URL. Apply role-based access, audit logging, and a human review step before any compliance action.
+Durable entities should include source documents and versions, policy assertions, affected business objects, evidence items, workflow cases, tasks, decisions, users and roles, integration deliveries, and audit events. Every generated assertion must point to a source version and locator. User interpretations, assumptions, and approvals must be stored separately from source facts, with immutable history and explicit supersession rather than destructive edits.
+
+## Integrations and interfaces
+
+The first vertical slice should use the official source URL and one controlled operational input, with an outbound export or webhook that is easy to audit. Future interfaces may include document repositories, ERP or HR systems, procurement data, ticketing platforms, and notification channels. Treat every integration as untrusted: validate schemas, use idempotency keys, isolate failures, and retain delivery evidence.
+
+## Security, compliance, and controls
+
+Use least-privilege roles, tenant or organization boundaries, encrypted secrets, redacted logs, retention controls, and a complete audit trail. Separate public source metadata from private evidence and business data. Add review gates for legal, financial, or operational decisions, support quarantine for unverified inputs, and fail closed when source lineage or required evidence is missing.
+
+## MVP vertical slice
+
+Ship one end-to-end workflow for a single policy change and one operational object: ingest the official source, create a versioned case, collect evidence, route it to two roles, record an approval or rejection, emit an auditable export, and replay the case when the source is amended. Measure processing time, evidence completeness, review turnaround, and false-positive or rework rate before adding more jurisdictions or integrations.
+
+## Scale and evolution
+
+After the vertical slice is reliable, add a queue-backed ingestion layer, policy-specific adapters, a rules or decision-support layer that never bypasses human approval, tenant isolation, integration retries, and analytics over workflow outcomes. Scale read-heavy source retrieval separately from transactional case management, and preserve backwards-compatible event contracts.
 
 ## Economic logic
 
-${idea.rationale} Validate the opportunity with a small pilot and measure time saved, review quality, and willingness to pay before expanding scope.
+${idea.rationale} Validate the opportunity with a focused pilot that measures time saved, review quality, evidence completeness, avoided rework, and the economic value of faster or safer operational decisions. Expand only when the workflow proves it solves a recurring problem rather than merely presenting policy information.
 
 ## Risks and constraints
 
-The source may be amended, the plain-language interpretation may omit legal nuance, and users may treat a product brief as legal advice. Keep the official record visible and require qualified review for decisions with legal or financial consequences.
+The source may be amended, the interpretation may omit legal nuance, and users may treat a product brief as legal advice. Keep the official record visible, isolate assumptions, require qualified review for consequential decisions, and ensure a failed integration cannot silently mark a case complete.
 
 ## First 30 days
 
-- Interview two or three potential users about the current monitoring workflow.
-- Prototype the source record, explanation, and review checklist.
-- Test the workflow against the official notice and record unanswered questions.
-- Define a small pilot and success measures before building integrations.
+- Interview the operational owner, technical owner, finance stakeholder, and qualified reviewer.
+- Map one source-to-decision workflow and define its state machine and evidence model.
+- Prototype the ingestion, review, audit, and export path as one vertical slice.
+- Test failure handling, permissions, and source amendments before building additional screens.
 
 ## Official source
 
@@ -355,7 +366,7 @@ export async function generateWorkspaceIdea(
   const configuration = (
     dependencies.configuration ?? readWorkspaceAiConfiguration
   )();
-  const prompt = `Analyze this source-linked policy change and identify one potential project or product idea that follows directly from it. The idea must be a grounded suggestion, not investment advice and not a separate developer idea plus finance idea. Keep the concept combined for a reader who may work in software and finance. If the source does not support a useful idea, return a low confidence below 0.55.\n\n${changeContext(change)}`;
+  const prompt = `Act as a senior product architect and technology strategy lead with 10+ years of experience. Analyze this source-linked policy change and identify at most one serious project or product opportunity that follows directly from the source. Do not force an idea: if the policy does not create a defensible operational, market, or economic problem worth solving, return a low confidence below 0.55.\n\nA qualifying idea must be a substantial system, not a basic dashboard, CRUD tracker, generic alerting app, content site, calculator, or thin wrapper around an API. It should have a clear system boundary, multiple user roles or operational actors, durable data and evidence flows, meaningful integrations or ingestion points, workflow/state transitions, security or compliance controls, and a credible reason the system could become valuable infrastructure. Keep one combined concept for software builders and finance/business decision-makers; do not split it into separate developer and finance ideas. Do not provide investment advice.\n\nReturn a concise idea title, summary, and rationale that name the core system, its primary workflow, the difficult or defensible part of the build, and the measurable business value. The source is authoritative; do not invent facts, legal obligations, customers, funding, market size, or implementation deadlines.\n\n${changeContext(change)}`;
   const result = await firstStructuredOutput(
     prompt,
     IDEA_JSON_SCHEMA,
@@ -389,7 +400,7 @@ export async function generateWorkspaceExpansion(
   const configuration = (
     dependencies.configuration ?? readWorkspaceAiConfiguration
   )();
-  const prompt = `Expand the selected, source-grounded idea into a polished but brief combined product requirements document (PRD). Do not split it into separate developer and finance proposals. Keep the idea itself unchanged, but explain the policy situation first for a common reader who may not know the agencies, legal terms, or market context involved. Be explicit about what is known from the source versus what is a proposed product response.\n\nWrite 700–1100 words in clear professional language. Use these Markdown headings in this order: Plain-language context; What changed; Why it matters; Product concept; Target users; Core user workflow; MVP scope; Data and implementation; Economic logic; Risks and constraints; First 30 days; Official source. Under Plain-language context, define the agency or institution, explain what the policy topic is in everyday terms, and describe who is affected using only the supplied source details. Under What changed, state the concrete action and effective or publication detail if supplied. Under Product concept, describe the one combined opportunity for readers thinking about software delivery and economic value together. Use concise bullets where helpful. Under Official source, finish with the exact official source URL as a Markdown link. Do not invent facts, statistics, funding, laws, deadlines, users, or market conditions beyond the supplied change.\n\nPolicy change:\n${changeContext(change)}\n\nSelected idea:\nTitle: ${idea.title}\nSummary: ${idea.summary}\nRationale: ${idea.rationale}`;
+  const prompt = `Act as a senior product architect, engineering manager, and business systems strategist. Expand the selected, source-grounded idea into a serious combined product requirements document (PRD). Do not split it into separate developer and finance proposals. Keep the idea itself unchanged, but reject shallow execution: this must describe a real system with an explicit boundary, core services or modules, durable data model, event or workflow state, external integrations, security and compliance controls, observability, deployment topology, and a credible phased delivery path. If the selected idea cannot support that level of system design without inventing facts, preserve the uncertainty and narrow the scope rather than fabricating a market.\n\nExplain the policy situation first for a common reader who may not know the agencies, legal terms, or market context involved. Be explicit about what is known from the source versus what is a proposed product response.\n\nWrite 900–1400 words in clear professional language. Use these Markdown headings in this order: Plain-language context; What changed; Why it matters; Product concept; System boundary and architecture; Users and operating model; Core workflow and state; Data model and evidence lineage; Integrations and interfaces; Security, compliance, and controls; MVP vertical slice; Scale and evolution; Economic logic; Risks and constraints; First 30 days; Official source. Under System boundary and architecture, describe the major services or modules and how data moves between them. Under Data model and evidence lineage, name the durable entities, source-of-truth rules, versioning, and audit trail. Under Integrations and interfaces, distinguish required first-party or public interfaces from optional future integrations. Under Security, compliance, and controls, include access boundaries, review gates, data minimization, and failure handling. Under MVP vertical slice, describe one end-to-end workflow that can be shipped and measured, not a list of disconnected screens. Under Official source, finish with the exact official source URL as a Markdown link. Do not invent facts, statistics, funding, laws, deadlines, users, or market conditions beyond the supplied change.\n\nPolicy change:\n${changeContext(change)}\n\nSelected idea:\nTitle: ${idea.title}\nSummary: ${idea.summary}\nRationale: ${idea.rationale}`;
   const result = await firstStructuredOutput(
     prompt,
     EXPANSION_JSON_SCHEMA,

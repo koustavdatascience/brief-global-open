@@ -18,6 +18,11 @@ import {
   type PublicWorkspace,
   type WorkspaceChangeType,
 } from "@/lib/publicApi";
+import {
+  WORKSPACE_TOPIC_LABELS,
+  WORKSPACE_TOPIC_VALUES,
+  type WorkspaceTopic,
+} from "../../../shared/workspaceTopics";
 
 const typeLabels: Record<WorkspaceChangeType, string> = {
   regulation: "Regulation",
@@ -553,6 +558,9 @@ export default function Workspace() {
   const [selectedType, setSelectedType] = useState<WorkspaceChangeType | "all">(
     "all"
   );
+  const [selectedTopic, setSelectedTopic] = useState<WorkspaceTopic | "all">(
+    "all"
+  );
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -573,9 +581,11 @@ export default function Workspace() {
   const visibleChanges = useMemo(
     () =>
       workspace?.changes.filter(
-        change => selectedType === "all" || change.change_type === selectedType
+        change =>
+          (selectedType === "all" || change.change_type === selectedType) &&
+          (selectedTopic === "all" || change.topics.includes(selectedTopic))
       ) ?? [],
-    [selectedType, workspace]
+    [selectedTopic, selectedType, workspace]
   );
 
   const ideasByChange = useMemo(() => {
@@ -663,9 +673,9 @@ export default function Workspace() {
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/55">
               Every Sunday, Wednesday, and Friday, Brief refreshes this public
-              workspace with source-linked changes, grouped by type, and
-              grounded project ideas for people watching policy, software, and
-              markets together.
+              workspace with source-linked changes, grouped by policy type and
+              subject area, and grounded project ideas for people watching
+              policy, software, and markets together.
             </p>
           </div>
           <aside className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
@@ -699,24 +709,48 @@ export default function Workspace() {
                 : "No completed cycle has been published yet."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "border-white bg-white text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-              onClick={() => setSelectedType("all")}
-              type="button"
-            >
-              All changes
-            </button>
-            {typeOrder.map(type => (
+          <div className="flex max-w-full flex-col items-start gap-2 overflow-x-auto pb-1">
+            <div className="flex min-w-max flex-wrap gap-2">
               <button
-                className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "border-[#aeb9ff] bg-[#aeb9ff] text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-                key={type}
-                onClick={() => setSelectedType(type)}
+                className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "border-white bg-white text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
+                onClick={() => setSelectedType("all")}
                 type="button"
               >
-                {typeLabels[type]}
+                All changes
               </button>
-            ))}
+              {typeOrder.map(type => (
+                <button
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "border-[#aeb9ff] bg-[#aeb9ff] text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  type="button"
+                >
+                  {typeLabels[type]}
+                </button>
+              ))}
+            </div>
+            <div className="flex min-w-max flex-wrap gap-2">
+              <span className="px-1 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-white/35">
+                Topics
+              </span>
+              <button
+                className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedTopic === "all" ? "border-white bg-white text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
+                onClick={() => setSelectedTopic("all")}
+                type="button"
+              >
+                All topics
+              </button>
+              {WORKSPACE_TOPIC_VALUES.map(topic => (
+                <button
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedTopic === topic ? "border-[#aeb9ff] bg-[#aeb9ff] text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
+                  key={topic}
+                  onClick={() => setSelectedTopic(topic)}
+                  type="button"
+                >
+                  {WORKSPACE_TOPIC_LABELS[topic]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -746,8 +780,8 @@ export default function Workspace() {
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/50">
               When the first Sunday or Wednesday cycle completes, changes will
-              appear here grouped by policy type, with grounded ideas available
-              to select and expand.
+              appear here grouped by policy type and subject area, with grounded
+              ideas available to select and expand.
             </p>
           </div>
         ) : null}
@@ -772,6 +806,14 @@ export default function Workspace() {
                         {typeLabels[change.change_type]}
                       </span>
                       <span>{change.importance}</span>
+                      {change.topics.map(topic => (
+                        <span
+                          className="rounded-full border border-white/10 px-2 py-1 text-[0.62rem] normal-case tracking-normal text-white/45"
+                          key={topic}
+                        >
+                          {WORKSPACE_TOPIC_LABELS[topic]}
+                        </span>
+                      ))}
                     </div>
                     <h2 className="mt-4 max-w-3xl text-2xl font-medium leading-tight tracking-[-0.04em] sm:text-3xl">
                       {change.headline}
