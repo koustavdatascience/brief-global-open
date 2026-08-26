@@ -647,6 +647,9 @@ export default function Workspace() {
           <BrandMark compact tone="light" />
         </Link>
         <nav className="flex items-center gap-2 text-xs font-semibold text-white/55 sm:gap-5">
+          <Link className="transition hover:text-white" href="/docs">
+            Docs
+          </Link>
           <a
             className="transition hover:text-white"
             href="https://github.com/koustavdatascience/brief-global-open"

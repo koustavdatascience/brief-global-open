@@ -94,8 +94,8 @@ export function BriefNavigation() {
         <a className="transition-colors hover:text-white" href="#method">
           Signals
         </a>
-        <a className="transition-colors hover:text-white" href="#docs">
-          Guides
+        <a className="transition-colors hover:text-white" href="/docs">
+          Docs
         </a>
         <a
           className="transition-colors hover:text-white"

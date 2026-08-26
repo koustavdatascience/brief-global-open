@@ -29,6 +29,10 @@ describe("public route surface", () => {
     expect(renderPath("/workspace")).toContain("Brief workspace");
   });
 
+  it("renders the public documentation at /docs", () => {
+    expect(renderPath("/docs")).toContain("Brief documentation");
+  });
+
   it.each(["/access", "/account", "/operations", "/app/sources", "/discover"])(
     "does not expose a retired private or removed route at %s",
     path => {
