@@ -709,47 +709,56 @@ export default function Workspace() {
                 : "No completed cycle has been published yet."}
             </p>
           </div>
-          <div className="flex max-w-full flex-col items-start gap-2 overflow-x-auto pb-1">
-            <div className="flex min-w-max flex-wrap gap-2">
-              <button
-                className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "border-white bg-white text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-                onClick={() => setSelectedType("all")}
-                type="button"
-              >
-                All changes
-              </button>
-              {typeOrder.map(type => (
+          <div className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.025] p-2 shadow-[0_16px_50px_rgba(0,0,0,0.18)] sm:p-3 lg:w-auto">
+            <div className="flex max-w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-w-max gap-1.5">
                 <button
-                  className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "border-[#aeb9ff] bg-[#aeb9ff] text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-                  key={type}
-                  onClick={() => setSelectedType(type)}
+                  aria-pressed={selectedType === "all"}
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "bg-white text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
+                  onClick={() => setSelectedType("all")}
                   type="button"
                 >
-                  {typeLabels[type]}
+                  All changes
                 </button>
-              ))}
+                {typeOrder.map(type => (
+                  <button
+                    aria-pressed={selectedType === type}
+                    className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
+                    key={type}
+                    onClick={() => setSelectedType(type)}
+                    type="button"
+                  >
+                    {typeLabels[type]}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex min-w-max flex-wrap gap-2">
-              <span className="px-1 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-white/35">
+            <div className="mt-2 flex max-w-full items-center gap-2 border-t border-white/[0.08] pt-2">
+              <span className="shrink-0 px-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-white/30">
                 Topics
               </span>
-              <button
-                className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedTopic === "all" ? "border-white bg-white text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-                onClick={() => setSelectedTopic("all")}
-                type="button"
-              >
-                All topics
-              </button>
-              {WORKSPACE_TOPIC_VALUES.map(topic => (
-                <button
-                  className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedTopic === topic ? "border-[#aeb9ff] bg-[#aeb9ff] text-[#07080b]" : "border-white/15 text-white/55 hover:border-white/35 hover:text-white"}`}
-                  key={topic}
-                  onClick={() => setSelectedTopic(topic)}
-                  type="button"
-                >
-                  {WORKSPACE_TOPIC_LABELS[topic]}
-                </button>
-              ))}
+              <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex min-w-max gap-1.5">
+                  {WORKSPACE_TOPIC_VALUES.map(topic => {
+                    const isSelected = selectedTopic === topic;
+                    return (
+                      <button
+                        aria-pressed={isSelected}
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${isSelected ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/45 hover:bg-white/[0.06] hover:text-white"}`}
+                        key={topic}
+                        onClick={() =>
+                          setSelectedTopic(current =>
+                            current === topic ? "all" : topic
+                          )
+                        }
+                        type="button"
+                      >
+                        {WORKSPACE_TOPIC_LABELS[topic]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
