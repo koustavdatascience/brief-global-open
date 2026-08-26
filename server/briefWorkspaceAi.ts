@@ -266,17 +266,6 @@ function changeContext(change: WorkspaceChangeInput) {
   return `Headline: ${change.headline}\nSummary: ${change.summary}\nChange type: ${change.changeType}\nImportance: ${change.importance}\nJurisdiction: ${change.jurisdiction}\nSource: ${change.sourceName}\nOfficial source URL: ${change.canonicalUrl}`;
 }
 
-function plainLanguageInstitution(change: WorkspaceChangeInput) {
-  const sourceText = `${change.headline} ${change.summary}`.toLowerCase();
-  if (sourceText.includes("epa"))
-    return "The EPA, or U.S. Environmental Protection Agency, is the federal agency responsible for administering and enforcing national environmental rules. In this notice, it is correcting or clarifying an existing regulatory document rather than creating a new product requirement for the reader.";
-  if (sourceText.includes("department of education"))
-    return "The U.S. Department of Education is the federal agency that administers national education programs and grants. In this notice, it is changing how a grant-related process is communicated or managed.";
-  if (sourceText.includes("bureau of industry and security"))
-    return "The Bureau of Industry and Security, or BIS, is the U.S. agency that administers export controls for sensitive goods, technology, and organizations. In this notice, it is changing or clarifying an export-related listing.";
-  return `${change.sourceName} is the official institution named by the source record. The notice is a public update to a government rule, program, guidance document, or market-access process. The explanation below separates confirmed source facts from the proposed product response.`;
-}
-
 function fallbackExpansion(
   change: WorkspaceChangeInput,
   idea: Pick<WorkspaceIdeaOutput, "title" | "summary" | "rationale">

@@ -951,8 +951,9 @@ export default function Workspace() {
                   {selectedIdea.title}
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-                  A professional, source-grounded brief that explains the policy
-                  context before outlining the product opportunity.
+                  A concise, source-grounded systems brief: context,
+                  opportunity, architecture, controls, and a measurable first
+                  slice.
                 </p>
               </div>
               <button
