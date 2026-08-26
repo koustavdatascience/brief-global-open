@@ -45,13 +45,16 @@ function chatResponse(value: unknown, status = 200) {
   );
 }
 
+const ideaSummary =
+  "A source-linked workflow system maps policy evidence to affected records, accountable owners, approval gates, and controlled exports. It gives engineering, operations, compliance, and finance teams one durable case record with source versions, evidence status, and measurable resolution outcomes. The first slice ingests one official notice, creates one case, requests missing evidence, and exports an approval-ready record without claiming legal authority.";
+const ideaRationale =
+  "The defensible value is not another alert or dashboard: it turns uncertain policy updates into traceable operational decisions, with a state machine, provenance, human review, retries, and an auditable handoff to the system of record. The hard part is policy-specific mapping and safe integration failure handling; a focused pilot can test whether it reduces review time and rework.";
+
 function ideaValue() {
   return {
     title: "Policy Evidence Control Plane",
-    summary:
-      "A source-linked workflow system that maps policy evidence to accountable operational decisions.",
-    rationale:
-      "It reduces repeated review work while preserving evidence lineage, approval controls, and measurable operational outcomes.",
+    summary: ideaSummary,
+    rationale: ideaRationale,
     confidence: 0.91,
   };
 }
@@ -76,6 +79,12 @@ describe("workspace AI provider rotation", () => {
     });
 
     expect(result?.modelId).toBe("openai/gpt-oss-20b");
+    expect(
+      (result?.summary.length ?? 0) + (result?.rationale.length ?? 0)
+    ).toBeGreaterThanOrEqual(700);
+    expect(
+      (result?.summary.length ?? 0) + (result?.rationale.length ?? 0)
+    ).toBeLessThanOrEqual(1200);
     expect(calls.map(call => call.url)).toEqual([
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       "https://openrouter.ai/api/v1/chat/completions",
@@ -104,36 +113,47 @@ describe("workspace AI provider rotation", () => {
       change,
       {
         title: "Policy Evidence Control Plane",
-        summary:
-          "A source-linked workflow system that maps policy evidence to accountable operational decisions.",
-        rationale:
-          "It reduces repeated review work while preserving evidence lineage, approval controls, and measurable operational outcomes.",
+        summary: ideaSummary,
+        rationale: ideaRationale,
       },
       { fetch: request, configuration: () => configuration }
     );
 
     expect(result?.modelId).toBe("grounded-fallback");
-    expect(result?.body_markdown.length).toBeGreaterThanOrEqual(700);
-    expect(result?.body_markdown.length).toBeLessThanOrEqual(1200);
-    expect(result?.body_markdown).toContain("## System");
-    expect(result?.body_markdown).toContain("## MVP and measure");
+    expect(result?.body_markdown.length).toBeGreaterThanOrEqual(4500);
+    expect(result?.body_markdown.length).toBeLessThanOrEqual(11500);
+    expect(result?.body_markdown).toContain(
+      "## System boundary and architecture"
+    );
+    expect(result?.body_markdown).toContain("## MVP vertical slice");
     expect(calls).toHaveLength(5);
   });
 
   it("advances after a valid-but-incomplete PRD and accepts a later complete result", async () => {
     const headings = [
-      "Context",
-      "Opportunity",
-      "System",
-      "Workflow",
-      "Controls",
-      "MVP and measure",
-      "Source",
+      "Plain-language context",
+      "What changed",
+      "Why it matters",
+      "Product concept",
+      "System boundary and architecture",
+      "Users and operating model",
+      "Core workflow and state",
+      "Data model and evidence lineage",
+      "Integrations and interfaces",
+      "Security, compliance, and controls",
+      "Observability and operations",
+      "Deployment topology",
+      "MVP vertical slice",
+      "Scale and evolution",
+      "Economic logic",
+      "Risks and constraints",
+      "First 30 days",
+      "Official source",
     ];
     const completePrd = headings
       .map(
         heading =>
-          `## ${heading}\n${"This proposed workflow uses source-linked evidence, explicit ownership, controlled transitions, and measurable recovery outcomes. ".repeat(1)}`
+          `## ${heading}\n${"This proposed workflow uses source-linked evidence, explicit ownership, controlled transitions, measurable recovery outcomes, versioned data, a human approval gate, and a documented failure-recovery path. ".repeat(2)}`
       )
       .join("\n");
     const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
@@ -155,16 +175,16 @@ describe("workspace AI provider rotation", () => {
       change,
       {
         title: "Policy Evidence Control Plane",
-        summary:
-          "A source-linked workflow system that maps policy evidence to accountable operational decisions.",
-        rationale:
-          "It reduces repeated review work while preserving evidence lineage, approval controls, and measurable operational outcomes.",
+        summary: ideaSummary,
+        rationale: ideaRationale,
       },
       { fetch: request, configuration: () => configuration }
     );
 
     expect(result?.modelId).toBe("openai/gpt-oss-20b");
-    expect(result?.body_markdown).toContain("## System");
+    expect(result?.body_markdown).toContain(
+      "## System boundary and architecture"
+    );
     expect(calls).toHaveLength(5);
     expect(calls[0]?.body.generationConfig).toMatchObject({
       maxOutputTokens: 7200,

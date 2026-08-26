@@ -951,9 +951,9 @@ export default function Workspace() {
                   {selectedIdea.title}
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-                  A concise, source-grounded systems brief: context,
-                  opportunity, architecture, controls, and a measurable first
-                  slice.
+                  A detailed, source-grounded PRD that explains the policy,
+                  system design, operating workflow, controls, and delivery
+                  path.
                 </p>
               </div>
               <button
