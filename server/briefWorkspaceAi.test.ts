@@ -113,38 +113,27 @@ describe("workspace AI provider rotation", () => {
     );
 
     expect(result?.modelId).toBe("grounded-fallback");
-    expect(result?.body_markdown.length).toBeGreaterThanOrEqual(3500);
-    expect(result?.body_markdown).toContain("## Users and operating model");
-    expect(result?.body_markdown).toContain("## Observability and operations");
-    expect(result?.body_markdown).toContain("## Deployment topology");
+    expect(result?.body_markdown.length).toBeGreaterThanOrEqual(700);
+    expect(result?.body_markdown.length).toBeLessThanOrEqual(1200);
+    expect(result?.body_markdown).toContain("## System");
+    expect(result?.body_markdown).toContain("## MVP and measure");
     expect(calls).toHaveLength(5);
   });
 
   it("advances after a valid-but-incomplete PRD and accepts a later complete result", async () => {
     const headings = [
-      "Plain-language context",
-      "What changed",
-      "Why it matters",
-      "Product concept",
-      "System boundary and architecture",
-      "Users and operating model",
-      "Core workflow and state",
-      "Data model and evidence lineage",
-      "Integrations and interfaces",
-      "Security, compliance, and controls",
-      "Observability and operations",
-      "Deployment topology",
-      "MVP vertical slice",
-      "Scale and evolution",
-      "Economic logic",
-      "Risks and constraints",
-      "First 30 days",
-      "Official source",
+      "Context",
+      "Opportunity",
+      "System",
+      "Workflow",
+      "Controls",
+      "MVP and measure",
+      "Source",
     ];
     const completePrd = headings
       .map(
         heading =>
-          `## ${heading}\n${"This proposed workflow uses source-linked evidence, explicit ownership, controlled transitions, and measurable recovery outcomes. ".repeat(4)}`
+          `## ${heading}\n${"This proposed workflow uses source-linked evidence, explicit ownership, controlled transitions, and measurable recovery outcomes. ".repeat(1)}`
       )
       .join("\n");
     const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
@@ -175,9 +164,7 @@ describe("workspace AI provider rotation", () => {
     );
 
     expect(result?.modelId).toBe("openai/gpt-oss-20b");
-    expect(result?.body_markdown).toContain(
-      "## System boundary and architecture"
-    );
+    expect(result?.body_markdown).toContain("## System");
     expect(calls).toHaveLength(5);
     expect(calls[0]?.body.generationConfig).toMatchObject({
       maxOutputTokens: 7200,
