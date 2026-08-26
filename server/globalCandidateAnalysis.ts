@@ -5,9 +5,14 @@ import {
   type ExtractionResult,
   type TrustedExtractionContext,
 } from "./extractionContract";
+import {
+  DEFAULT_FREE_OPENROUTER_MODEL,
+  openRouterModelChain,
+  supportsJsonObjectResponseFormat,
+} from "./openRouterModels";
 
 export const GEMINI_PRIMARY_MODEL_ID = "gemini-2.5-flash";
-export const OPENROUTER_FALLBACK_MODEL_ID = "openai/gpt-oss-20b";
+export const OPENROUTER_FALLBACK_MODEL_ID = DEFAULT_FREE_OPENROUTER_MODEL;
 export const GROQ_FALLBACK_MODEL_ID = "openai/gpt-oss-20b";
 
 const PROVIDER_TIMEOUT_MS = 20_000;
@@ -81,7 +86,7 @@ function chatResponseText(payload: unknown): string {
 }
 
 function chatRequest(model: string, prompt: string) {
-  return {
+  const body: Record<string, unknown> = {
     model,
     max_tokens: 4096,
     temperature: 0.1,
@@ -90,15 +95,10 @@ function chatRequest(model: string, prompt: string) {
       { role: "system", content: PROVIDER_SYSTEM_INSTRUCTION },
       { role: "user", content: prompt },
     ],
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "policy_signal_candidate",
-        strict: true,
-        schema: POLICY_SIGNAL_JSON_SCHEMA,
-      },
-    },
   };
+  if (supportsJsonObjectResponseFormat(model))
+    body.response_format = { type: "json_object" };
+  return body;
 }
 
 function bearerRequest(
@@ -160,35 +160,30 @@ async function analyzeWithGemini(
 async function analyzeWithOpenRouter(
   prompt: string,
   configuration: DirectProviderConfiguration,
-  request: typeof fetch
+  request: typeof fetch,
+  model: string
 ): Promise<ProviderAttempt> {
   if (!configuration.openRouterApiKey)
-    return { status: "unavailable", modelId: configuration.openRouterModel };
+    return { status: "unavailable", modelId: model };
   try {
     const response = await request(
       "https://openrouter.ai/api/v1/chat/completions",
-      bearerRequest(
-        {
-          ...chatRequest(configuration.openRouterModel, prompt),
-          provider: { require_parameters: true },
-        },
-        configuration.openRouterApiKey
-      )
+      bearerRequest(chatRequest(model, prompt), configuration.openRouterApiKey)
     );
     if (!response.ok)
       return {
         status: "provider_failure",
-        modelId: configuration.openRouterModel,
+        modelId: model,
       };
     return {
       status: "output",
-      modelId: configuration.openRouterModel,
+      modelId: model,
       text: chatResponseText(await response.json()),
     };
   } catch {
     return {
       status: "provider_failure",
-      modelId: configuration.openRouterModel,
+      modelId: model,
     };
   }
 }
@@ -241,19 +236,36 @@ export async function analyzeGlobalCandidate(
   const prompt = buildExtractionPrompt(normalizedText, context);
   let lastModelId: string | undefined;
 
-  for (const attemptProvider of [
-    analyzeWithGemini,
-    analyzeWithOpenRouter,
-    analyzeWithGroq,
-  ]) {
-    const result = await attemptProvider(prompt, configuration, request);
-    lastModelId = result.modelId ?? lastModelId;
-    if (result.status === "output")
+  const geminiResult = await analyzeWithGemini(prompt, configuration, request);
+  lastModelId = geminiResult.modelId ?? lastModelId;
+  if (geminiResult.status === "output")
+    return {
+      modelId: geminiResult.modelId,
+      outcome: parseStructuredExtraction(geminiResult.text),
+    };
+
+  for (const model of openRouterModelChain(configuration.openRouterModel)) {
+    const openRouterResult = await analyzeWithOpenRouter(
+      prompt,
+      configuration,
+      request,
+      model
+    );
+    lastModelId = openRouterResult.modelId ?? lastModelId;
+    if (openRouterResult.status === "output")
       return {
-        modelId: result.modelId,
-        outcome: parseStructuredExtraction(result.text),
+        modelId: openRouterResult.modelId,
+        outcome: parseStructuredExtraction(openRouterResult.text),
       };
   }
+
+  const groqResult = await analyzeWithGroq(prompt, configuration, request);
+  lastModelId = groqResult.modelId ?? lastModelId;
+  if (groqResult.status === "output")
+    return {
+      modelId: groqResult.modelId,
+      outcome: parseStructuredExtraction(groqResult.text),
+    };
 
   return {
     modelId: lastModelId,

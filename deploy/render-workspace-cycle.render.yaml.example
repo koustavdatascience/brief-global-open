@@ -19,7 +19,7 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
-        value: openai/gpt-oss-20b
+        value: minimax/minimax-m3:free
       - key: GROQ_API_KEY
         sync: false
       - key: WORKER_ID
