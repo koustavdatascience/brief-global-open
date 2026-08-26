@@ -2,7 +2,7 @@ import type { GlobalCandidateExecution } from "./globalCandidateExecutor";
 import {
   createServiceRoleFetch,
   type ServiceRoleConfiguration,
-} from "./shared/serviceRoleFetch";
+} from "../shared/serviceRoleFetch";
 
 export class RefreshWorkerRepositoryError extends Error {
   constructor(public readonly status: number) {

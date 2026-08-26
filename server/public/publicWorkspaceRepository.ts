@@ -1,5 +1,5 @@
-import { postgrestIn } from "./shared/postgrest";
-import type { WorkspaceTopic } from "../shared/workspaceTopics";
+import { postgrestIn } from "../shared/postgrest";
+import type { WorkspaceTopic } from "../../shared/workspaceTopics";
 import { supabasePublicFetch } from "./supabaseData";
 
 export type WorkspaceChangeType =

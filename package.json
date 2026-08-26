@@ -9,14 +9,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/publicServer.ts",
-    "build": "vite build && esbuild server/publicServer.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server.js && esbuild server/refreshWorker.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/worker.js && esbuild server/workspaceWorker.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/workspaceWorker.js",
+    "dev": "NODE_ENV=development tsx server/public/publicServer.ts",
+    "build": "vite build && esbuild server/public/publicServer.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server.js && esbuild server/workers/refreshWorker.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/worker.js && esbuild server/workers/workspaceWorker.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/workspaceWorker.js",
     "start": "NODE_ENV=production node dist/server.js",
     "refresh:daily": "NODE_ENV=production node dist/worker.js",
     "refresh:workspace": "NODE_ENV=production node dist/workspaceWorker.js",
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "prettier --check README.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md TRADEMARK.md docs deploy render.yaml supabase/migrations scripts client/index.html client/src server package.json tsconfig.json vite.config.ts vitest.config.ts",
+    "lint": "prettier --check README.md .github docs deploy render.yaml supabase/migrations scripts client/index.html client/src server package.json tsconfig.json vite.config.ts vitest.config.ts",
     "validate:migrations": "node scripts/validate-migrations.mjs",
     "validate:workspace-cycle": "node scripts/validate-workspace-cycle.mjs",
     "secret-scan": "node scripts/secret-scan.mjs",

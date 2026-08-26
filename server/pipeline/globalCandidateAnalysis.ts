@@ -9,7 +9,7 @@ import {
   DEFAULT_FREE_OPENROUTER_MODEL,
   openRouterModelChain,
   supportsJsonObjectResponseFormat,
-} from "./openRouterModels";
+} from "../ai/openRouterModels";
 
 export const GEMINI_PRIMARY_MODEL_ID = "gemini-2.5-flash";
 export const OPENROUTER_FALLBACK_MODEL_ID = DEFAULT_FREE_OPENROUTER_MODEL;

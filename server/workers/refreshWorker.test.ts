@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseRefreshWorkerEnv, runDailyRefreshWorker } from "./refreshWorker";
-import type { RefreshWorkerRepository } from "./refreshWorkerRepository";
+import type { RefreshWorkerRepository } from "../pipeline/refreshWorkerRepository";
 
 function repository(
   overrides: Partial<RefreshWorkerRepository> = {}

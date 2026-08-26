@@ -1,19 +1,19 @@
-import { PolicySignalSchema } from "./extractionContract";
+import { PolicySignalSchema } from "../pipeline/extractionContract";
 import {
   generateWorkspaceExpansion,
   generateWorkspaceIdea,
   type WorkspaceChangeInput,
-} from "./briefWorkspaceAi";
+} from "../ai/briefWorkspaceAi";
 import { parseRefreshWorkerEnv, runDailyRefreshWorker } from "./refreshWorker";
-import { createRefreshWorkerRepository } from "./refreshWorkerRepository";
-import { indiaCalendarDate, INDIA_TIMEZONE } from "./shared/indiaCalendar";
-import { postgrestIn } from "./shared/postgrest";
-import { classifyWorkspaceTopics } from "../shared/workspaceTopics";
+import { createRefreshWorkerRepository } from "../pipeline/refreshWorkerRepository";
+import { indiaCalendarDate, INDIA_TIMEZONE } from "../shared/indiaCalendar";
+import { postgrestIn } from "../shared/postgrest";
+import { classifyWorkspaceTopics } from "../../shared/workspaceTopics";
 import {
   createServiceRoleFetch,
   type ServiceFetch,
   type ServiceRoleConfiguration,
-} from "./shared/serviceRoleFetch";
+} from "../shared/serviceRoleFetch";
 
 const MAX_WORKSPACE_CHANGES = 12;
 const MIN_AUTOMATIC_PUBLICATION_CONFIDENCE = 0.8;

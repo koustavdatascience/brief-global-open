@@ -375,7 +375,7 @@ function WorkflowVisual({ item }: { item: WorkflowItem }) {
           </div>
         </div>
         <div className="mt-7 space-y-3">
-          {["README.md", "docs/architecture.md", "CONTRIBUTING.md"].map(
+          {["README.md", "docs/architecture.md", ".github/CONTRIBUTING.md"].map(
             file => (
               <div
                 className="flex items-center justify-between rounded-lg border border-white/8 bg-black/15 px-3 py-3 text-sm text-white/55"
@@ -619,16 +619,16 @@ export function OpenSourceDocs() {
       "https://github.com/koustavdatascience/brief-global-open/blob/main/.prettierrc",
     ],
     [
-      "CODE_OF_CONDUCT.md",
+      ".github/CODE_OF_CONDUCT.md",
       "file",
       "Initial clean public release",
-      "https://github.com/koustavdatascience/brief-global-open/blob/main/CODE_OF_CONDUCT.md",
+      "https://github.com/koustavdatascience/brief-global-open/blob/main/.github/CODE_OF_CONDUCT.md",
     ],
     [
-      "CONTRIBUTING.md",
+      ".github/CONTRIBUTING.md",
       "file",
       "Initial clean public release",
-      "https://github.com/koustavdatascience/brief-global-open/blob/main/CONTRIBUTING.md",
+      "https://github.com/koustavdatascience/brief-global-open/blob/main/.github/CONTRIBUTING.md",
     ],
     [
       "LICENSE",
@@ -643,16 +643,16 @@ export function OpenSourceDocs() {
       "https://github.com/koustavdatascience/brief-global-open/blob/main/README.md",
     ],
     [
-      "SECURITY.md",
+      ".github/SECURITY.md",
       "file",
       "Initial clean public release",
-      "https://github.com/koustavdatascience/brief-global-open/blob/main/SECURITY.md",
+      "https://github.com/koustavdatascience/brief-global-open/blob/main/.github/SECURITY.md",
     ],
     [
-      "TRADEMARK.md",
+      "docs/trademark.md",
       "file",
       "Initial clean public release",
-      "https://github.com/koustavdatascience/brief-global-open/blob/main/TRADEMARK.md",
+      "https://github.com/koustavdatascience/brief-global-open/blob/main/docs/trademark.md",
     ],
     [
       "package.json",
@@ -892,7 +892,7 @@ export function OpenSourceDocs() {
                 </a>
                 <a
                   className="flex items-center gap-2 hover:text-white"
-                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/CODE_OF_CONDUCT.md"
+                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/.github/CODE_OF_CONDUCT.md"
                   rel="noreferrer"
                   target="_blank"
                 >
@@ -900,7 +900,7 @@ export function OpenSourceDocs() {
                 </a>
                 <a
                   className="flex items-center gap-2 hover:text-white"
-                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/CONTRIBUTING.md"
+                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/.github/CONTRIBUTING.md"
                   rel="noreferrer"
                   target="_blank"
                 >
@@ -908,7 +908,7 @@ export function OpenSourceDocs() {
                 </a>
                 <a
                   className="flex items-center gap-2 hover:text-white"
-                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/SECURITY.md"
+                  href="https://github.com/koustavdatascience/brief-global-open/blob/main/.github/SECURITY.md"
                   rel="noreferrer"
                   target="_blank"
                 >

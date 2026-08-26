@@ -4,7 +4,7 @@
 
 **Live website:** <https://brief-global-open.onrender.com>
 
-> The `brief-global` repository identifier is provisional. `Brief` is a working name pending trademark and domain clearance; see [TRADEMARK.md](TRADEMARK.md).
+> The `brief-global` repository identifier is provisional. `Brief` is a working name pending trademark and domain clearance; see [the trademark note](docs/trademark.md).
 
 ## Public and private boundary
 
@@ -47,7 +47,7 @@ No Dockerfile is required for the native Node deployment.
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before contributing. Do not commit credentials, raw private source material, run records, or generated candidates.
+Read [contributing guidance](.github/CONTRIBUTING.md), [security policy](.github/SECURITY.md), and [code of conduct](.github/CODE_OF_CONDUCT.md) before contributing. Do not commit credentials, raw private source material, run records, or generated candidates.
 
 ## License
 
