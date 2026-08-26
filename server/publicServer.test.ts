@@ -25,46 +25,13 @@ describe("portable public server", () => {
     server = undefined;
   });
 
-  it("exposes only bounded anonymous public signal data", async () => {
-    const app = createPublicApp({
-      listJurisdictions: async () => [],
-      listSignals: async input => [
-        {
-          id: "signal-1",
-          headline: "Public",
-          summary: "Public",
-          signal_type: "regulation",
-          importance: "watch",
-          canonical_url: "https://example.gov/item",
-          published_at: "2026-08-24T00:00:00.000Z",
-          jurisdiction: null,
-          input,
-        } as never,
-      ],
-    });
-    const running = await startServer(app);
-    server = running.server;
-
-    const response = await fetch(
-      `${running.origin}/api/public/signals?limit=999&offset=3`
-    );
-    expect(response.status).toBe(200);
-    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-    await expect(response.json()).resolves.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: "signal-1" })])
-    );
-  });
-
   it("reports health and allows only explicitly configured browser origins", async () => {
     const environment = parsePublicServerEnv({
       SUPABASE_URL: "https://project.supabase.co",
       SUPABASE_PUBLISHABLE_KEY: "p".repeat(32),
       CORS_ORIGINS: "https://brief.example",
     });
-    const app = createPublicApp(
-      { listJurisdictions: async () => [], listSignals: async () => [] },
-      environment
-    );
+    const app = createPublicApp({}, environment);
     const running = await startServer(app);
     server = running.server;
 
@@ -83,11 +50,41 @@ describe("portable public server", () => {
     expect(deniedOrigin.headers.get("access-control-allow-origin")).toBeNull();
   });
 
-  it("registers the Express 5-compatible SPA fallback without crashing startup", async () => {
+  it("exposes only the Workspace API after Discover removal", async () => {
     const app = createPublicApp({
-      listJurisdictions: async () => [],
-      listSignals: async () => [],
+      listWorkspace: async () => ({
+        cycle: null,
+        schedule: {
+          label: "Sundays + Wednesdays + Fridays",
+          timezone: "Asia/Kolkata",
+          next_window: "2026-08-26T03:30:00.000Z",
+        },
+        changes: [],
+        ideas: [],
+        expansions: [],
+      }),
     });
+    const running = await startServer(app);
+    server = running.server;
+
+    const workspace = await fetch(`${running.origin}/api/public/workspace`);
+    expect(workspace.status).toBe(200);
+    await expect(workspace.json()).resolves.toMatchObject({
+      changes: [],
+      ideas: [],
+      expansions: [],
+    });
+
+    await expect(
+      fetch(`${running.origin}/api/public/signals`)
+    ).resolves.toHaveProperty("status", 404);
+    await expect(
+      fetch(`${running.origin}/api/public/jurisdictions`)
+    ).resolves.toHaveProperty("status", 404);
+  });
+
+  it("registers the Express 5-compatible SPA fallback without crashing startup", async () => {
+    const app = createPublicApp();
     expect(() =>
       attachProductionStaticRoutes(app, "/nonexistent-public-dir")
     ).not.toThrow();
@@ -100,42 +97,19 @@ describe("portable public server", () => {
     );
   });
 
-  it("rejects malformed jurisdiction filters without querying the repository", async () => {
-    let calls = 0;
-    const app = createPublicApp({
-      listJurisdictions: async () => [],
-      listSignals: async () => {
-        calls += 1;
-        return [];
-      },
-    });
-    const running = await startServer(app);
-    server = running.server;
-
-    const response = await fetch(
-      `${running.origin}/api/public/signals?jurisdiction=EU%20AI`
-    );
-    expect(response.status).toBe(400);
-    expect(calls).toBe(0);
-    await expect(response.json()).resolves.toEqual({
-      error: "invalid_jurisdiction",
-    });
-  });
-
   it("redacts upstream failures rather than returning provider detail", async () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
     const app = createPublicApp({
-      listJurisdictions: async () => {
+      listWorkspace: async () => {
         throw new SupabaseDataError(401);
       },
-      listSignals: async () => [],
     });
     const running = await startServer(app);
     server = running.server;
 
-    const response = await fetch(`${running.origin}/api/public/jurisdictions`);
+    const response = await fetch(`${running.origin}/api/public/workspace`);
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
       error: "public_data_unavailable",
@@ -147,5 +121,6 @@ describe("portable public server", () => {
         upstreamStatus: 401,
       }
     );
+    consoleError.mockRestore();
   });
 });

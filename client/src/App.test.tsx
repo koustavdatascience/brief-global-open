@@ -29,8 +29,8 @@ describe("public route surface", () => {
     expect(renderPath("/workspace")).toContain("Brief workspace");
   });
 
-  it.each(["/access", "/account", "/operations", "/app/sources"])(
-    "does not expose a retired private route at %s",
+  it.each(["/access", "/account", "/operations", "/app/sources", "/discover"])(
+    "does not expose a retired private or removed route at %s",
     path => {
       const html = renderPath(path);
       expect(html).toContain("Page Not Found");

@@ -1,36 +1,17 @@
 import express, { type Express, type Request, type Response } from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  listPublicJurisdictions,
-  listPublicSignals,
-} from "./publicDiscoveryRepository";
 import { listPublicWorkspace } from "./publicWorkspaceRepository";
 import { parsePublicServerEnv, type PublicServerEnv } from "./publicEnv";
 import { SupabaseDataError } from "./supabaseData";
 
 type PublicDataDependencies = {
-  listJurisdictions: typeof listPublicJurisdictions;
-  listSignals: typeof listPublicSignals;
   listWorkspace?: typeof listPublicWorkspace;
 };
 
 const defaultDependencies: PublicDataDependencies = {
-  listJurisdictions: listPublicJurisdictions,
-  listSignals: listPublicSignals,
   listWorkspace: listPublicWorkspace,
 };
-
-function numericQuery(value: unknown, fallback: number, maximum: number) {
-  if (typeof value !== "string" || !/^\d+$/.test(value)) return fallback;
-  return Math.min(Math.max(Number(value), 0), maximum);
-}
-
-function jurisdictionQuery(value: unknown) {
-  if (typeof value !== "string" || value.length === 0) return undefined;
-  if (!/^[A-Z]{2,8}$/.test(value)) return null;
-  return value;
-}
 
 function applyPublicHeaders(response: Response) {
   response.set({
@@ -71,47 +52,12 @@ export function createPublicApp(
   );
 
   app.get(
-    "/api/public/jurisdictions",
-    async (request: Request, response: Response, next) => {
-      try {
-        const jurisdictions = await dependencies.listJurisdictions(
-          numericQuery(request.query.limit, 32, 64) || 32
-        );
-        response.json(jurisdictions);
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
-
-  app.get(
     "/api/public/workspace",
     async (_request: Request, response: Response, next) => {
       try {
         response.json(
           await (dependencies.listWorkspace ?? listPublicWorkspace)()
         );
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
-
-  app.get(
-    "/api/public/signals",
-    async (request: Request, response: Response, next) => {
-      const jurisdictionCode = jurisdictionQuery(request.query.jurisdiction);
-      if (jurisdictionCode === null) {
-        response.status(400).json({ error: "invalid_jurisdiction" });
-        return;
-      }
-      try {
-        const signals = await dependencies.listSignals({
-          jurisdictionCode,
-          limit: numericQuery(request.query.limit, 12, 24) || 12,
-          offset: numericQuery(request.query.offset, 0, 10_000),
-        });
-        response.json(signals);
       } catch (error) {
         next(error);
       }
