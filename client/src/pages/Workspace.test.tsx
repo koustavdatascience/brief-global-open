@@ -24,6 +24,17 @@ describe("Workspace", () => {
     expect(html).not.toContain("service_role");
   });
 
+  it("keeps topics in a compact menu instead of a second inline filter row", () => {
+    const html = renderToStaticMarkup(
+      <Router hook={() => ["/workspace", vi.fn()]}>
+        <Workspace />
+      </Router>
+    );
+    expect(html).toContain('aria-haspopup="menu"');
+    expect(html).toContain(">Topics<");
+    expect(html).not.toContain("All topics");
+  });
+
   it("normalizes character-spaced PDF labels without changing normal prose", () => {
     expect(
       normalizePdfText(

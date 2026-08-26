@@ -5,6 +5,7 @@ import EditorialLabel from "@/components/EditorialLabel";
 import {
   ArrowUpRight,
   Download,
+  ChevronDown,
   ExternalLink,
   Github,
   LoaderCircle,
@@ -561,6 +562,7 @@ export default function Workspace() {
   const [selectedTopic, setSelectedTopic] = useState<WorkspaceTopic | "all">(
     "all"
   );
+  const [topicMenuOpen, setTopicMenuOpen] = useState(false);
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -709,55 +711,93 @@ export default function Workspace() {
                 : "No completed cycle has been published yet."}
             </p>
           </div>
-          <div className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.025] p-2 shadow-[0_16px_50px_rgba(0,0,0,0.18)] sm:p-3 lg:w-auto">
-            <div className="flex max-w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max gap-1.5">
-                <button
-                  aria-pressed={selectedType === "all"}
-                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "bg-white text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
-                  onClick={() => setSelectedType("all")}
-                  type="button"
-                >
-                  All changes
-                </button>
-                {typeOrder.map(type => (
+          <div className="relative w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.025] p-2 shadow-[0_16px_50px_rgba(0,0,0,0.18)] sm:p-3 lg:w-auto">
+            <div className="flex min-w-0 items-center gap-1">
+              <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex min-w-max gap-1.5 pr-2">
                   <button
-                    aria-pressed={selectedType === type}
-                    className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
-                    key={type}
-                    onClick={() => setSelectedType(type)}
+                    aria-pressed={selectedType === "all"}
+                    className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === "all" ? "bg-white text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
+                    onClick={() => setSelectedType("all")}
                     type="button"
                   >
-                    {typeLabels[type]}
+                    All changes
                   </button>
-                ))}
-              </div>
-            </div>
-            <div className="mt-2 flex max-w-full items-center gap-2 border-t border-white/[0.08] pt-2">
-              <span className="shrink-0 px-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-white/30">
-                Topics
-              </span>
-              <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex min-w-max gap-1.5">
-                  {WORKSPACE_TOPIC_VALUES.map(topic => {
-                    const isSelected = selectedTopic === topic;
-                    return (
-                      <button
-                        aria-pressed={isSelected}
-                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${isSelected ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/45 hover:bg-white/[0.06] hover:text-white"}`}
-                        key={topic}
-                        onClick={() =>
-                          setSelectedTopic(current =>
-                            current === topic ? "all" : topic
-                          )
-                        }
-                        type="button"
-                      >
-                        {WORKSPACE_TOPIC_LABELS[topic]}
-                      </button>
-                    );
-                  })}
+                  {typeOrder.map(type => (
+                    <button
+                      aria-pressed={selectedType === type}
+                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedType === type ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
+                      key={type}
+                      onClick={() => setSelectedType(type)}
+                      type="button"
+                    >
+                      {typeLabels[type]}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div className="relative shrink-0 border-l border-white/[0.08] pl-1">
+                <button
+                  aria-expanded={topicMenuOpen}
+                  aria-haspopup="menu"
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition ${selectedTopic !== "all" ? "bg-[#aeb9ff] text-[#07080b] shadow-sm" : "text-white/55 hover:bg-white/[0.06] hover:text-white"}`}
+                  onClick={() => setTopicMenuOpen(open => !open)}
+                  type="button"
+                >
+                  <Tags className="h-3.5 w-3.5" />
+                  <span className="max-w-[9rem] truncate">
+                    {selectedTopic === "all"
+                      ? "Topics"
+                      : WORKSPACE_TOPIC_LABELS[selectedTopic]}
+                  </span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${topicMenuOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {topicMenuOpen ? (
+                  <div
+                    aria-label="Topic filters"
+                    className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-64 rounded-2xl border border-white/15 bg-[#0c0e13] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+                    role="menu"
+                  >
+                    <div className="px-3 pb-2 pt-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-white/35">
+                      Filter by topic
+                    </div>
+                    <button
+                      aria-checked={selectedTopic === "all"}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${selectedTopic === "all" ? "bg-white text-[#07080b]" : "text-white/60 hover:bg-white/[0.07] hover:text-white"}`}
+                      onClick={() => {
+                        setSelectedTopic("all");
+                        setTopicMenuOpen(false);
+                      }}
+                      role="menuitemradio"
+                      type="button"
+                    >
+                      All topics
+                      {selectedTopic === "all" ? <span>✓</span> : null}
+                    </button>
+                    <div className="my-1.5 border-t border-white/[0.08]" />
+                    {WORKSPACE_TOPIC_VALUES.map(topic => {
+                      const isSelected = selectedTopic === topic;
+                      return (
+                        <button
+                          aria-checked={isSelected}
+                          className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${isSelected ? "bg-[#aeb9ff] text-[#07080b]" : "text-white/60 hover:bg-white/[0.07] hover:text-white"}`}
+                          key={topic}
+                          onClick={() => {
+                            setSelectedTopic(topic);
+                            setTopicMenuOpen(false);
+                          }}
+                          role="menuitemradio"
+                          type="button"
+                        >
+                          {WORKSPACE_TOPIC_LABELS[topic]}
+                          {isSelected ? <span>✓</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
