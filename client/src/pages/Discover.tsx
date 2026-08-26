@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import BrandMark from "@/components/BrandMark";
+import BlurredStagger from "@/components/BlurredStagger";
 import EditorialLabel from "@/components/EditorialLabel";
 import {
   listPublicJurisdictions,
@@ -103,15 +104,24 @@ export default function Discover() {
         <div className="mt-5 grid gap-10 border-b border-[var(--brief-rule)] pb-12 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
           <div>
             <h1 className="max-w-5xl font-display text-5xl leading-[0.94] tracking-[-0.05em] sm:text-6xl lg:text-[4.5rem]">
-              Policy change, in{" "}
-              <em className="font-normal text-[var(--brief-accent)]">
+              <BlurredStagger as="span" delay={80} stagger={18}>
+                {"Policy change, in "}
+              </BlurredStagger>
+              <BlurredStagger
+                as="em"
+                className="font-normal text-[var(--brief-accent)]"
+                delay={300}
+                stagger={18}
+              >
                 context.
-              </em>
+              </BlurredStagger>
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--brief-muted)]">
-              A public view of curated regulatory and market-access signals.
-              Open the source, understand the jurisdiction, then decide whether
-              it matters.
+              <BlurredStagger as="span" delay={520} stagger={12}>
+                A public view of curated regulatory and market-access signals.
+                Open the source, understand the jurisdiction, then decide
+                whether it matters.
+              </BlurredStagger>
             </p>
           </div>
           <aside className="rounded-xl border border-[var(--brief-rule)] bg-white/55 p-5 text-sm leading-6 text-[var(--brief-muted)]">
