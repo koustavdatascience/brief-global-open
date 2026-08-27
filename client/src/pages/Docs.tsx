@@ -311,7 +311,7 @@ export default function Docs() {
 
             <a
               className="group rounded-2xl border border-[var(--brief-rule)] bg-white p-6 transition hover:-translate-y-0.5 hover:border-[var(--brief-ink)]"
-              href={`${githubUrl}/blob/main/SECURITY.md`}
+              href={`${githubUrl}/blob/main/.github/SECURITY.md`}
             >
               <ShieldCheck className="h-5 w-5 text-[var(--brief-accent)]" />
               <div className="mt-10 flex items-end justify-between gap-4">
