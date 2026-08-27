@@ -186,6 +186,12 @@ describe("workspace AI provider rotation", () => {
       "## System boundary and architecture"
     );
     expect(calls).toHaveLength(5);
+    expect(JSON.stringify(calls[0]?.body)).toContain(
+      "structured editorial PDF layout"
+    );
+    expect(JSON.stringify(calls[4]?.body)).toContain(
+      "never place two headings on one line"
+    );
     expect(calls[0]?.body.generationConfig).toMatchObject({
       maxOutputTokens: 7200,
     });
