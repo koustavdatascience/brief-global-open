@@ -321,33 +321,37 @@ function downloadPdf(
 ) {
   if (typeof window === "undefined") return;
 
-  const document = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth = document.internal.pageSize.getWidth();
-  const pageHeight = document.internal.pageSize.getHeight();
-  const margin = 18;
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 17;
   const contentWidth = pageWidth - margin * 2;
-  const textSafetyGutter = 5;
-  const contentBottom = pageHeight - 18;
-  let y = margin;
-
-  const addPageIfNeeded = (height: number) => {
-    if (y + height <= contentBottom) return;
-    document.addPage();
-    y = margin;
+  const contentBottom = pageHeight - 20;
+  const colors = {
+    accent: [185, 78, 59] as [number, number, number],
+    ink: [20, 24, 32] as [number, number, number],
+    navy: [34, 43, 69] as [number, number, number],
+    body: [76, 82, 95] as [number, number, number],
+    muted: [116, 122, 134] as [number, number, number],
+    rule: [219, 222, 228] as [number, number, number],
+    paper: [250, 250, 249] as [number, number, number],
+    panel: [244, 246, 249] as [number, number, number],
+    blue: [48, 82, 154] as [number, number, number],
   };
+  let y = 22;
 
   const wrapToWidth = (text: string, width: number) => {
-    const measuredLines = document.splitTextToSize(text, width) as string[];
+    const measuredLines = pdf.splitTextToSize(text, width) as string[];
     const lines: string[] = [];
     for (const measuredLine of measuredLines) {
-      if (document.getTextWidth(measuredLine) <= width + 0.01) {
+      if (pdf.getTextWidth(measuredLine) <= width + 0.01) {
         lines.push(measuredLine);
         continue;
       }
       let current = "";
       for (const character of measuredLine) {
         const candidate = current + character;
-        if (current && document.getTextWidth(candidate) > width) {
+        if (current && pdf.getTextWidth(candidate) > width) {
           lines.push(current);
           current = character;
         } else {
@@ -357,6 +361,48 @@ function downloadPdf(
       if (current) lines.push(current);
     }
     return lines;
+  };
+
+  const getLines = (
+    text: string,
+    size: number,
+    font: "normal" | "bold",
+    width: number
+  ) => {
+    pdf.setFont("helvetica", font);
+    pdf.setFontSize(size);
+    pdf.setCharSpace(0);
+    return wrapToWidth(normalizePdfText(text), width);
+  };
+
+  const drawRunningHeader = () => {
+    pdf.setDrawColor(...colors.rule);
+    pdf.setLineWidth(0.25);
+    pdf.line(margin, 14, pageWidth - margin, 14);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    pdf.setCharSpace(0.6);
+    pdf.setTextColor(...colors.accent);
+    pdf.text("BRIEF / POLICY BRIEF", margin, 10);
+    pdf.setCharSpace(0);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...colors.muted);
+    const runningTitle = getLines(idea.title, 7.5, "normal", 70)[0] ?? "";
+    pdf.text(runningTitle, pageWidth - margin, 10, { align: "right" });
+  };
+
+  const startNewPage = () => {
+    pdf.addPage();
+    pdf.setFillColor(...colors.paper);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+    y = 23;
+    drawRunningHeader();
+  };
+
+  const addPageIfNeeded = (height: number) => {
+    if (y + height <= contentBottom) return;
+    startNewPage();
   };
 
   const writeWrapped = (
@@ -372,109 +418,187 @@ function downloadPdf(
     }
   ) => {
     const indent = options.indent ?? 0;
-    document.setFont("helvetica", options.font ?? "normal");
-    document.setFontSize(options.size);
-    document.setCharSpace(0);
-    document.setTextColor(...options.color);
-    const lines = wrapToWidth(
-      normalizePdfText(text),
-      contentWidth - indent - textSafetyGutter
-    );
-    const lineHeight = options.lineHeight;
+    const font = options.font ?? "normal";
+    const lines = getLines(text, options.size, font, contentWidth - indent - 2);
     const before = options.before ?? 0;
-    addPageIfNeeded(before + lineHeight + lines.length * lineHeight);
+    addPageIfNeeded(before + Math.max(1, lines.length) * options.lineHeight);
     y += before;
+    pdf.setFont("helvetica", font);
+    pdf.setFontSize(options.size);
+    pdf.setCharSpace(0);
+    pdf.setTextColor(...options.color);
     for (const line of lines) {
-      addPageIfNeeded(lineHeight);
-      document.setCharSpace(0);
-      document.text(line, margin + indent, y);
-      y += lineHeight;
+      addPageIfNeeded(options.lineHeight);
+      pdf.text(line, margin + indent, y);
+      y += options.lineHeight;
     }
     y += options.after ?? 0;
   };
 
-  document.setProperties({
+  const drawSectionHeading = (label: string, number: string) => {
+    addPageIfNeeded(13);
+    pdf.setFillColor(...colors.accent);
+    pdf.roundedRect(margin, y - 1, 8, 7, 1.7, 1.7, "F");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    pdf.setCharSpace(0);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(number, margin + 4, y + 3.8, { align: "center" });
+    pdf.setFontSize(11.5);
+    pdf.setTextColor(...colors.navy);
+    pdf.text(label, margin + 12, y + 4, { baseline: "middle" });
+    y += 12;
+  };
+
+  const drawSummaryPanel = (
+    eyebrow: string,
+    heading: string,
+    body: string,
+    accent: [number, number, number]
+  ) => {
+    const headingLines = getLines(heading, 10.2, "bold", contentWidth - 14);
+    const bodyLines = getLines(body, 9.3, "normal", contentWidth - 14);
+    const panelHeight =
+      10 + headingLines.length * 5 + 4 + bodyLines.length * 4.6 + 8;
+    addPageIfNeeded(panelHeight + 4);
+    const top = y;
+    pdf.setFillColor(...colors.panel);
+    pdf.roundedRect(margin, top, contentWidth, panelHeight, 3, 3, "F");
+    pdf.setFillColor(...accent);
+    pdf.roundedRect(margin, top, 2.5, panelHeight, 1.2, 1.2, "F");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    pdf.setCharSpace(0.7);
+    pdf.setTextColor(...accent);
+    pdf.text(eyebrow.toUpperCase(), margin + 8, top + 8);
+    pdf.setCharSpace(0);
+    pdf.setFontSize(10.2);
+    pdf.setTextColor(...colors.ink);
+    let panelY = top + 14;
+    for (const line of headingLines) {
+      pdf.text(line, margin + 8, panelY);
+      panelY += 5;
+    }
+    panelY += 2;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9.3);
+    pdf.setTextColor(...colors.body);
+    for (const line of bodyLines) {
+      pdf.text(line, margin + 8, panelY);
+      panelY += 4.6;
+    }
+    y = top + panelHeight + 8;
+  };
+
+  const drawMetadata = () => {
+    const gap = 4;
+    const boxWidth = (contentWidth - gap) / 2;
+    const cells = [
+      ["STATUS", change.importance],
+      ["JURISDICTION", change.jurisdiction?.name ?? "Global"],
+      ["POLICY TYPE", typeLabels[change.change_type]],
+      ["SOURCE", change.source_name],
+    ] as const;
+    for (let row = 0; row < 2; row += 1) {
+      const rowCells = cells.slice(row * 2, row * 2 + 2);
+      const heights = rowCells.map(([, value]) => {
+        const lines = getLines(value, 9, "bold", boxWidth - 8);
+        return Math.max(19, 8 + lines.length * 4.3);
+      });
+      const rowHeight = Math.max(...heights);
+      addPageIfNeeded(rowHeight + 4);
+      rowCells.forEach(([label, value], index) => {
+        const left = margin + index * (boxWidth + gap);
+        pdf.setFillColor(...colors.paper);
+        pdf.setDrawColor(...colors.rule);
+        pdf.setLineWidth(0.25);
+        pdf.roundedRect(left, y, boxWidth, rowHeight, 2.5, 2.5, "FD");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(6.6);
+        pdf.setCharSpace(0.55);
+        pdf.setTextColor(...colors.muted);
+        pdf.text(label, left + 4, y + 6);
+        pdf.setCharSpace(0);
+        pdf.setFontSize(9);
+        pdf.setTextColor(...colors.ink);
+        const valueLines = getLines(value, 9, "bold", boxWidth - 8);
+        valueLines.forEach((line, lineIndex) => {
+          pdf.text(line, left + 4, y + 12 + lineIndex * 4.3);
+        });
+      });
+      y += rowHeight + 4;
+    }
+    y += 3;
+  };
+
+  const drawBullet = (text: string) => {
+    const indent = 6;
+    const lines = getLines(text, 9.4, "normal", contentWidth - indent - 2);
+    addPageIfNeeded(Math.max(1, lines.length) * 4.8);
+    pdf.setFillColor(...colors.accent);
+    pdf.circle(margin + 1.4, y - 1.3, 0.8, "F");
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9.4);
+    pdf.setTextColor(...colors.body);
+    lines.forEach((line, index) => {
+      pdf.text(line, margin + indent, y + index * 4.8);
+    });
+    y += lines.length * 4.8 + 1.5;
+  };
+
+  pdf.setProperties({
     title: `${idea.title} - Brief PRD`,
     subject: "Source-grounded policy intelligence product brief",
     author: "Brief",
     creator: "Brief Global Open",
   });
-  document.setFillColor(10, 12, 17);
-  document.rect(0, 0, pageWidth, 9, "F");
-  document.setFont("helvetica", "bold");
-  document.setFontSize(8);
-  document.setCharSpace(0);
-  document.setTextColor(119, 131, 214);
-  document.text("BRIEF / POLICY INTELLIGENCE", margin, 6);
+  pdf.setFillColor(...colors.paper);
+  pdf.rect(0, 0, pageWidth, pageHeight, "F");
+  pdf.setFillColor(10, 12, 17);
+  pdf.rect(0, 0, pageWidth, 9, "F");
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(7.5);
+  pdf.setCharSpace(0.65);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text("BRIEF / GLOBAL POLICY INTELLIGENCE", margin, 6);
+  pdf.setCharSpace(0);
 
   writeWrapped(idea.title, {
-    size: 22,
-    lineHeight: 9,
-    color: [22, 25, 33],
+    size: 24,
+    lineHeight: 9.6,
+    color: colors.ink,
     font: "bold",
     after: 3,
   });
-  writeWrapped("Professional source-grounded product requirements brief", {
+  writeWrapped("A source-grounded product requirements brief", {
     size: 10,
     lineHeight: 5,
-    color: [92, 99, 112],
-    after: 7,
+    color: colors.muted,
+    after: 8,
   });
+  drawMetadata();
+  pdf.setDrawColor(...colors.rule);
+  pdf.setLineWidth(0.35);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 9;
 
-  document.setDrawColor(220, 223, 229);
-  document.line(margin, y, pageWidth - margin, y);
-  y += 8;
-
-  writeWrapped("Policy change", {
-    size: 11,
-    lineHeight: 5,
-    color: [38, 47, 79],
-    font: "bold",
-    after: 2,
-  });
-  writeWrapped(change.headline, {
-    size: 10,
-    lineHeight: 5,
-    color: [35, 39, 48],
-    font: "bold",
-    after: 2,
-  });
-  writeWrapped(change.summary, {
-    size: 9.5,
-    lineHeight: 4.8,
-    color: [75, 81, 94],
-    after: 2,
-  });
-  writeWrapped(
-    `${change.jurisdiction?.name ?? "Global"} | ${change.source_name} | ${change.importance}`,
-    {
-      size: 8.5,
-      lineHeight: 4.5,
-      color: [111, 117, 129],
-      after: 7,
-    }
+  drawSectionHeading("Policy context", "01");
+  drawSummaryPanel(
+    "What changed",
+    change.headline,
+    change.summary,
+    colors.navy
   );
 
-  writeWrapped("Potential project or idea", {
-    size: 11,
-    lineHeight: 5,
-    color: [38, 47, 79],
-    font: "bold",
-    after: 2,
-  });
-  writeWrapped(idea.summary, {
-    size: 9.5,
-    lineHeight: 4.8,
-    color: [75, 81, 94],
-    after: 2,
-  });
-  writeWrapped(idea.rationale, {
-    size: 9.5,
-    lineHeight: 4.8,
-    color: [75, 81, 94],
-    after: 7,
-  });
+  drawSectionHeading("Potential project or idea", "02");
+  drawSummaryPanel(
+    "Proposed system",
+    idea.title,
+    `${idea.summary} ${idea.rationale}`,
+    colors.accent
+  );
 
+  drawSectionHeading("Detailed implementation brief", "03");
   const expansionMarkdown =
     expansion &&
     !hasCharacterSpacingArtifact(expansion.body_markdown) &&
@@ -483,64 +607,73 @@ function downloadPdf(
       : fallbackPrd(change, idea);
   for (const line of pdfLines(expansionMarkdown)) {
     if (line.kind === "heading") {
+      addPageIfNeeded(11);
+      pdf.setFillColor(...colors.navy);
+      pdf.rect(margin, y - 1, 1.5, 7, "F");
       writeWrapped(line.text, {
-        size: 11,
+        size: 10.7,
         lineHeight: 5,
-        color: [38, 47, 79],
+        color: colors.navy,
         font: "bold",
-        before: 3,
-        after: 2,
+        indent: 5,
+        before: 1,
+        after: 2.5,
       });
     } else if (line.kind === "bullet") {
-      writeWrapped(`- ${line.text}`, {
-        size: 9.5,
-        lineHeight: 4.8,
-        color: [75, 81, 94],
-        indent: 3,
-        after: 1.5,
-      });
+      drawBullet(line.text);
     } else {
       writeWrapped(line.text, {
-        size: 9.5,
+        size: 9.4,
         lineHeight: 4.8,
-        color: [75, 81, 94],
-        after: 2,
+        color: colors.body,
+        after: 2.2,
       });
     }
   }
 
-  y += 4;
-  writeWrapped("Official source", {
-    size: 11,
-    lineHeight: 5,
-    color: [38, 47, 79],
-    font: "bold",
-    after: 2,
+  drawSectionHeading("Official source", "04");
+  const sourceLines = getLines(
+    change.canonical_url,
+    8.5,
+    "normal",
+    contentWidth - 10
+  );
+  const sourceHeight = 12 + sourceLines.length * 4.4;
+  addPageIfNeeded(sourceHeight);
+  const sourceTop = y;
+  pdf.setFillColor(239, 243, 250);
+  pdf.roundedRect(margin, sourceTop, contentWidth, sourceHeight, 3, 3, "F");
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(7);
+  pdf.setCharSpace(0.55);
+  pdf.setTextColor(...colors.blue);
+  pdf.text("OFFICIAL RECORD", margin + 7, sourceTop + 7);
+  pdf.setCharSpace(0);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  sourceLines.forEach((line, index) => {
+    pdf.textWithLink(line, margin + 7, sourceTop + 13 + index * 4.4, {
+      url: change.canonical_url,
+    });
   });
-  const sourceLabel = normalizePdfText(change.canonical_url);
-  document.setFont("helvetica", "normal");
-  document.setFontSize(8.5);
-  document.setCharSpace(0);
-  document.setTextColor(49, 82, 154);
-  const sourceLines = wrapToWidth(sourceLabel, contentWidth - textSafetyGutter);
-  for (const line of sourceLines) {
-    addPageIfNeeded(4.5);
-    document.setCharSpace(0);
-    document.textWithLink(line, margin, y, { url: change.canonical_url });
-    y += 4.5;
-  }
-  y += 4;
+  y = sourceTop + sourceHeight + 7;
 
-  for (let page = 1; page <= document.getNumberOfPages(); page += 1) {
-    document.setPage(page);
-    document.setDrawColor(220, 223, 229);
-    document.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
-    document.setFont("helvetica", "normal");
-    document.setFontSize(8);
-    document.setCharSpace(0);
-    document.setTextColor(130, 135, 145);
-    document.text("Brief Global Open", margin, pageHeight - 8);
-    document.text(`Page ${page}`, pageWidth - margin, pageHeight - 8, {
+  for (let page = 1; page <= pdf.getNumberOfPages(); page += 1) {
+    pdf.setPage(page);
+    pdf.setDrawColor(...colors.rule);
+    pdf.setLineWidth(0.25);
+    pdf.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.setCharSpace(0);
+    pdf.setTextColor(...colors.muted);
+    pdf.text("Brief global policy intelligence", margin, pageHeight - 8);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Built by Koustav", pageWidth / 2, pageHeight - 8, {
+      align: "center",
+    });
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Page ${page}`, pageWidth - margin, pageHeight - 8, {
       align: "right",
     });
   }
@@ -549,7 +682,7 @@ function downloadPdf(
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  document.save(`brief-${slug || "prd"}.pdf`);
+  pdf.save(`brief-${slug || "prd"}.pdf`);
 }
 
 export default function Workspace() {
