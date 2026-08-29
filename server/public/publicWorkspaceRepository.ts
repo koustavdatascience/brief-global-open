@@ -66,6 +66,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     select:
       "id,scheduled_for,completed_at:finished_at,change_count,idea_count,status",
     status: "eq.completed",
+    change_count: "gt.0",
     order: "scheduled_for.desc",
     limit: "1",
   });
