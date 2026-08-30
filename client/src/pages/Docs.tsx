@@ -198,7 +198,7 @@ export default function Docs() {
           <div className="grid gap-0 sm:grid-cols-2">
             {principles.map(([title, description]) => (
               <div
-                className="border-t border-white/15 py-5 sm:px-5 sm:first:pl-0"
+                className="border-t border-white/15 py-5 sm:px-5 sm:odd:pl-0"
                 key={title}
               >
                 <div className="flex items-start gap-3">

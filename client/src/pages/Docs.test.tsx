@@ -14,6 +14,7 @@ describe("Docs", () => {
     expect(html).toContain("Brief documentation");
     expect(html).toContain("From source to decision context.");
     expect(html).toContain("Contact and feedback");
+    expect(html.match(/sm:odd:pl-0/g)).toHaveLength(4);
     expect(html).toContain("Report an issue");
     expect(html).toContain("koustavdatascience@gmail.com");
     expect(html).toContain(
