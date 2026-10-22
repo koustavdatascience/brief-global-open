@@ -12,7 +12,11 @@
     "onlyBuiltDependencies": [
       "core-js",
       "esbuild"
-    ]
+    ],
+    "allowBuilds": {
+      "core-js": true,
+      "esbuild": true
+    }
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/public/publicServer.ts",
