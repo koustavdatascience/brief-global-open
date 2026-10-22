@@ -1,5 +1,2 @@
 packages:
   - "."
-onlyBuiltDependencies:
-  - core-js
-  - esbuild
