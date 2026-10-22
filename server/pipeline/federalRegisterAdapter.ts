@@ -22,6 +22,8 @@ type FederalRegisterRecord = {
 type FederalRegisterResponse = { results?: FederalRegisterRecord[] };
 
 type FederalRegisterDetail = Pick<FederalRegisterRecord, "raw_text_url">;
+const FEDERAL_REGISTER_LOOKBACK_DAYS = 4;
+const FEDERAL_REGISTER_MAX_RECORDS = 25;
 
 function approvedUrl(value: string): string {
   const url = new URL(value);
@@ -86,10 +88,17 @@ async function resolveRawTextUrl(
   return detail.raw_text_url ? approvedUrl(detail.raw_text_url) : null;
 }
 
-/** Fetches a maximum of five documented Federal Register records. No links are expanded. */
+function isoDateDaysAgo(now: Date, days: number) {
+  const date = new Date(now);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
+/** Fetches a bounded recent Federal Register window. No links are expanded. */
 export async function fetchFederalRegisterDocuments(
   source: FederalRegisterApprovedSource,
-  fetcher: typeof fetch = fetch
+  fetcher: typeof fetch = fetch,
+  now: Date = new Date()
 ): Promise<BoundedGlobalDocument[]> {
   if (
     source.canonicalUrl !==
@@ -100,8 +109,12 @@ export async function fetchFederalRegisterDocuments(
     throw new Error("unapproved_federal_register_source");
   }
   const endpoint = new URL(source.canonicalUrl);
-  endpoint.searchParams.set("per_page", "5");
+  endpoint.searchParams.set("per_page", String(FEDERAL_REGISTER_MAX_RECORDS));
   endpoint.searchParams.set("order", "newest");
+  endpoint.searchParams.set(
+    "conditions[publication_date][gte]",
+    isoDateDaysAgo(now, FEDERAL_REGISTER_LOOKBACK_DAYS)
+  );
   endpoint.searchParams.append("conditions[type][]", "RULE");
   endpoint.searchParams.append("conditions[type][]", "PRORULE");
   const response = await fetcher(endpoint, {
@@ -112,7 +125,7 @@ export async function fetchFederalRegisterDocuments(
   approvedUrl(response.url || endpoint.toString());
   const payload = (await response.json()) as FederalRegisterResponse;
   const records = Array.isArray(payload.results)
-    ? payload.results.slice(0, 5)
+    ? payload.results.slice(0, FEDERAL_REGISTER_MAX_RECORDS)
     : [];
   const documents: BoundedGlobalDocument[] = [];
   for (const record of records) {

@@ -61,11 +61,12 @@ function isFederalRegisterSource(
 
 async function fetchBoundedApprovedDocuments(
   source: CycleSource,
-  request: typeof fetch
+  request: typeof fetch,
+  now: Date
 ) {
   if (!isFederalRegisterSource(source))
     throw new Error("unsupported_approved_source");
-  return fetchFederalRegisterDocuments(source, request);
+  return fetchFederalRegisterDocuments(source, request, now);
 }
 
 export async function runDailyRefreshWorker(input: {
@@ -99,7 +100,7 @@ export async function runDailyRefreshWorker(input: {
   try {
     const result = await runApprovedGlobalRefreshCycle(configuration, sources, {
       fetchDocuments: source =>
-        fetchBoundedApprovedDocuments(source, input.sourceFetch ?? fetch),
+        fetchBoundedApprovedDocuments(source, input.sourceFetch ?? fetch, now),
       analysis: input.analysis,
       persistCandidate: async (sourceId, execution) =>
         (await input.repository.persistCandidate({

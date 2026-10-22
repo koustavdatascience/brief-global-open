@@ -217,8 +217,8 @@ async function analyzeWithGroq(
 
 /**
  * This only accepts a size-bounded document from the executor. An output that
- * parses to an abstention stops the chain; later providers are used exclusively
- * after a provider cannot supply an output. No result publishes a public signal.
+ * parses to an abstention, the next provider gets a chance. No result publishes
+ * a public signal unless it passes the strict extraction contract.
  */
 export async function analyzeGlobalCandidate(
   sourceText: string,
@@ -235,14 +235,18 @@ export async function analyzeGlobalCandidate(
   )();
   const prompt = buildExtractionPrompt(normalizedText, context);
   let lastModelId: string | undefined;
+  let lastAbstention:
+    | Extract<GlobalCandidateAnalysisResult["outcome"], { status: "abstained" }>
+    | undefined;
 
   const geminiResult = await analyzeWithGemini(prompt, configuration, request);
   lastModelId = geminiResult.modelId ?? lastModelId;
-  if (geminiResult.status === "output")
-    return {
-      modelId: geminiResult.modelId,
-      outcome: parseStructuredExtraction(geminiResult.text),
-    };
+  if (geminiResult.status === "output") {
+    const outcome = parseStructuredExtraction(geminiResult.text);
+    if (outcome.status === "accepted")
+      return { modelId: geminiResult.modelId, outcome };
+    lastAbstention = outcome;
+  }
 
   for (const model of openRouterModelChain(configuration.openRouterModel)) {
     const openRouterResult = await analyzeWithOpenRouter(
@@ -252,20 +256,24 @@ export async function analyzeGlobalCandidate(
       model
     );
     lastModelId = openRouterResult.modelId ?? lastModelId;
-    if (openRouterResult.status === "output")
-      return {
-        modelId: openRouterResult.modelId,
-        outcome: parseStructuredExtraction(openRouterResult.text),
-      };
+    if (openRouterResult.status === "output") {
+      const outcome = parseStructuredExtraction(openRouterResult.text);
+      if (outcome.status === "accepted")
+        return { modelId: openRouterResult.modelId, outcome };
+      lastAbstention = outcome;
+    }
   }
 
   const groqResult = await analyzeWithGroq(prompt, configuration, request);
   lastModelId = groqResult.modelId ?? lastModelId;
-  if (groqResult.status === "output")
-    return {
-      modelId: groqResult.modelId,
-      outcome: parseStructuredExtraction(groqResult.text),
-    };
+  if (groqResult.status === "output") {
+    const outcome = parseStructuredExtraction(groqResult.text);
+    if (outcome.status === "accepted")
+      return { modelId: groqResult.modelId, outcome };
+    lastAbstention = outcome;
+  }
+
+  if (lastAbstention) return { modelId: lastModelId, outcome: lastAbstention };
 
   return {
     modelId: lastModelId,

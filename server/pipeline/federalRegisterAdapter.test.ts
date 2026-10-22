@@ -42,6 +42,11 @@ describe("Federal Register approved-source adapter", () => {
         sourceText: "Official source text",
       }),
     ]);
+    const catalogueUrl = String(fetcher.mock.calls[0]?.[0]);
+    expect(catalogueUrl).toContain("per_page=25");
+    expect(catalogueUrl).toContain(
+      "conditions%5Bpublication_date%5D%5Bgte%5D="
+    );
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 

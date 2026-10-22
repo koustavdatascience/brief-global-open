@@ -130,10 +130,13 @@ describe("direct global candidate analysis", () => {
     expect(openRouterBodies[2]?.response_format).toBeUndefined();
   });
 
-  it("does not replace a provider abstention with a later model response", async () => {
+  it("continues to a later provider after a primary abstention", async () => {
     const fetch = vi
       .fn()
-      .mockResolvedValue(geminiResponse({ ...validSignal, confidence: 0.2 }));
+      .mockResolvedValueOnce(
+        geminiResponse({ ...validSignal, confidence: 0.2 })
+      )
+      .mockResolvedValueOnce(chatResponse(validSignal));
     const result = await analyzeGlobalCandidate(
       "A short official record.",
       { jurisdictionCode: "EU", sourceLanguage: "en" },
@@ -141,9 +144,9 @@ describe("direct global candidate analysis", () => {
     );
 
     expect(result).toMatchObject({
-      modelId: GEMINI_PRIMARY_MODEL_ID,
-      outcome: { status: "abstained", reason: "low_confidence" },
+      modelId: OPENROUTER_FALLBACK_MODEL_ID,
+      outcome: { status: "accepted" },
     });
-    expect(fetch).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
