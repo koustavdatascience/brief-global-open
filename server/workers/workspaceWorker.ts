@@ -384,6 +384,8 @@ if (
   void main().catch(error => {
     console.error("[brief] workspace cycle failed", {
       kind: error instanceof Error ? error.name : "unknown_error",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     process.exitCode = 1;
   });
