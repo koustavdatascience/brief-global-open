@@ -5,6 +5,7 @@
   "description": "Account-free, source-linked public feed for global policy intelligence.",
   "type": "module",
   "license": "Apache-2.0",
+  "packageManager": "pnpm@9.12.0",
   "engines": {
     "node": ">=22"
   },
