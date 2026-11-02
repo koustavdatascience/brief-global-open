@@ -129,18 +129,23 @@ export async function fetchFederalRegisterDocuments(
     : [];
   const documents: BoundedGlobalDocument[] = [];
   for (const record of records) {
-    if (!record.title || !record.html_url) continue;
-    const officialRecordUrl = approvedUrl(record.html_url);
-    const sourceDocumentUrl = await resolveRawTextUrl(record, fetcher);
-    if (!sourceDocumentUrl) continue;
-    const sourceText = await fetchBoundedText(sourceDocumentUrl, fetcher);
-    documents.push({
-      sourceDocumentUrl,
-      officialRecordUrl,
-      title: record.title,
-      publishedAt: publicationTimestamp(record.publication_date),
-      sourceText,
-    });
+    try {
+      if (!record.title || !record.html_url) continue;
+      const officialRecordUrl = approvedUrl(record.html_url);
+      const sourceDocumentUrl = await resolveRawTextUrl(record, fetcher);
+      if (!sourceDocumentUrl) continue;
+      const sourceText = await fetchBoundedText(sourceDocumentUrl, fetcher);
+      documents.push({
+        sourceDocumentUrl,
+        officialRecordUrl,
+        title: record.title,
+        publishedAt: publicationTimestamp(record.publication_date),
+        sourceText,
+      });
+    } catch {
+      // A single record can lack a raw-text rendition or exceed the bounded
+      // source contract; retain the rest of the approved catalogue window.
+    }
   }
   return documents;
 }

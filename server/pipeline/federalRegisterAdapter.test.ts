@@ -97,6 +97,46 @@ describe("Federal Register approved-source adapter", () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
+  it("skips one unavailable raw-text rendition without aborting the window", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "Unavailable text",
+                html_url: "https://www.federalregister.gov/documents/1",
+                raw_text_url: "https://www.federalregister.gov/documents/1/raw",
+              },
+              {
+                title: "Available text",
+                html_url: "https://www.federalregister.gov/documents/2",
+                raw_text_url: "https://www.federalregister.gov/documents/2/raw",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response("Available official source text", {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+        })
+      );
+
+    const documents = await fetchFederalRegisterDocuments(source, fetcher);
+
+    expect(documents).toEqual([
+      expect.objectContaining({
+        officialRecordUrl: "https://www.federalregister.gov/documents/2",
+        sourceText: "Available official source text",
+      }),
+    ]);
+  });
+
   it("rejects a source that is not the reviewed Federal Register endpoint", async () => {
     await expect(
       fetchFederalRegisterDocuments(
