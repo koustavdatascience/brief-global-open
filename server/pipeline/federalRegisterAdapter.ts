@@ -24,6 +24,15 @@ type FederalRegisterResponse = { results?: FederalRegisterRecord[] };
 type FederalRegisterDetail = Pick<FederalRegisterRecord, "raw_text_url">;
 const FEDERAL_REGISTER_LOOKBACK_DAYS = 4;
 const FEDERAL_REGISTER_MAX_RECORDS = 25;
+const FEDERAL_REGISTER_USER_AGENT =
+  "Brief policy workspace/1.0 (source ingestion; contact: koustavdatascience@gmail.com)";
+
+function federalRegisterHeaders(accept: string) {
+  return {
+    Accept: accept,
+    "User-Agent": FEDERAL_REGISTER_USER_AGENT,
+  };
+}
 
 function approvedUrl(value: string): string {
   const url = new URL(value);
@@ -46,7 +55,7 @@ async function fetchBoundedText(
   fetcher: typeof fetch
 ): Promise<string> {
   const response = await fetcher(url, {
-    headers: { Accept: "text/plain, text/html;q=0.8" },
+    headers: federalRegisterHeaders("text/plain, text/html;q=0.8"),
     signal: AbortSignal.timeout(12_000),
   });
   if (!response.ok) throw new Error("federal_register_document_unavailable");
@@ -60,6 +69,8 @@ async function fetchBoundedText(
   )
     throw new Error("source_too_large");
   const text = await response.text();
+  if (/Federal Register :: Request Access/i.test(text))
+    throw new Error("federal_register_access_page");
   if (
     new TextEncoder().encode(text).byteLength >
     MAX_GLOBAL_CANDIDATE_SOURCE_BYTES
@@ -79,7 +90,7 @@ async function resolveRawTextUrl(
     `https://www.federalregister.gov/api/v1/documents/${encodeURIComponent(record.document_number)}.json`
   );
   const response = await fetcher(detailUrl, {
-    headers: { Accept: "application/json" },
+    headers: federalRegisterHeaders("application/json"),
     signal: AbortSignal.timeout(12_000),
   });
   if (!response.ok) return null;
@@ -118,7 +129,7 @@ export async function fetchFederalRegisterDocuments(
   endpoint.searchParams.append("conditions[type][]", "RULE");
   endpoint.searchParams.append("conditions[type][]", "PRORULE");
   const response = await fetcher(endpoint, {
-    headers: { Accept: "application/json" },
+    headers: federalRegisterHeaders("application/json"),
     signal: AbortSignal.timeout(12_000),
   });
   if (!response.ok) throw new Error("federal_register_catalogue_unavailable");

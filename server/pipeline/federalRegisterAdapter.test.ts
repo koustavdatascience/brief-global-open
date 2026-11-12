@@ -47,6 +47,13 @@ describe("Federal Register approved-source adapter", () => {
     expect(catalogueUrl).toContain(
       "conditions%5Bpublication_date%5D%5Bgte%5D="
     );
+    expect(fetcher.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "User-Agent": expect.stringContaining("Brief policy workspace/1.0"),
+        }),
+      })
+    );
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
@@ -120,6 +127,51 @@ describe("Federal Register approved-source adapter", () => {
         )
       )
       .mockResolvedValueOnce(new Response("not found", { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response("Available official source text", {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+        })
+      );
+
+    const documents = await fetchFederalRegisterDocuments(source, fetcher);
+
+    expect(documents).toEqual([
+      expect.objectContaining({
+        officialRecordUrl: "https://www.federalregister.gov/documents/2",
+        sourceText: "Available official source text",
+      }),
+    ]);
+  });
+
+  it("skips a 200 request-access page instead of sending it to analysis", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "Access-gated text",
+                html_url: "https://www.federalregister.gov/documents/1",
+                raw_text_url: "https://www.federalregister.gov/documents/1/raw",
+              },
+              {
+                title: "Available text",
+                html_url: "https://www.federalregister.gov/documents/2",
+                raw_text_url: "https://www.federalregister.gov/documents/2/raw",
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response("<title>Federal Register :: Request Access</title>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        })
+      )
       .mockResolvedValueOnce(
         new Response("Available official source text", {
           status: 200,
