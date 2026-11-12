@@ -42,8 +42,23 @@ export type GlobalCandidateAnalysisDependencies = {
 
 type ProviderAttempt =
   | { status: "output"; modelId: string; text: string }
-  | { status: "provider_failure"; modelId?: string }
+  | { status: "provider_failure"; modelId?: string; httpStatus?: number }
   | { status: "unavailable"; modelId?: string };
+
+function logProviderFailure(
+  provider: string,
+  attempt: Extract<ProviderAttempt, { status: "provider_failure" }>
+) {
+  console.warn("[brief] policy AI provider failure", {
+    provider,
+    modelId: attempt.modelId,
+    httpStatus: attempt.httpStatus,
+  });
+}
+
+function logRejectedOutput(modelId: string | undefined, reason: string) {
+  console.warn("[brief] policy AI output rejected", { modelId, reason });
+}
 
 function configuredModel(value: string | undefined, fallback: string): string {
   return value?.trim() || fallback;
@@ -145,15 +160,27 @@ async function analyzeWithGemini(
         }),
       }
     );
-    if (!response.ok)
-      return { status: "provider_failure", modelId: configuration.geminiModel };
+    if (!response.ok) {
+      const attempt = {
+        status: "provider_failure" as const,
+        modelId: configuration.geminiModel,
+        httpStatus: response.status,
+      };
+      logProviderFailure("gemini", attempt);
+      return attempt;
+    }
     return {
       status: "output",
       modelId: configuration.geminiModel,
       text: geminiResponseText(await response.json()),
     };
   } catch {
-    return { status: "provider_failure", modelId: configuration.geminiModel };
+    const attempt = {
+      status: "provider_failure" as const,
+      modelId: configuration.geminiModel,
+    };
+    logProviderFailure("gemini", attempt);
+    return attempt;
   }
 }
 
@@ -170,21 +197,27 @@ async function analyzeWithOpenRouter(
       "https://openrouter.ai/api/v1/chat/completions",
       bearerRequest(chatRequest(model, prompt), configuration.openRouterApiKey)
     );
-    if (!response.ok)
-      return {
-        status: "provider_failure",
+    if (!response.ok) {
+      const attempt = {
+        status: "provider_failure" as const,
         modelId: model,
+        httpStatus: response.status,
       };
+      logProviderFailure("openrouter", attempt);
+      return attempt;
+    }
     return {
       status: "output",
       modelId: model,
       text: chatResponseText(await response.json()),
     };
   } catch {
-    return {
-      status: "provider_failure",
+    const attempt = {
+      status: "provider_failure" as const,
       modelId: model,
     };
+    logProviderFailure("openrouter", attempt);
+    return attempt;
   }
 }
 
@@ -203,15 +236,27 @@ async function analyzeWithGroq(
         configuration.groqApiKey
       )
     );
-    if (!response.ok)
-      return { status: "provider_failure", modelId: configuration.groqModel };
+    if (!response.ok) {
+      const attempt = {
+        status: "provider_failure" as const,
+        modelId: configuration.groqModel,
+        httpStatus: response.status,
+      };
+      logProviderFailure("groq", attempt);
+      return attempt;
+    }
     return {
       status: "output",
       modelId: configuration.groqModel,
       text: chatResponseText(await response.json()),
     };
   } catch {
-    return { status: "provider_failure", modelId: configuration.groqModel };
+    const attempt = {
+      status: "provider_failure" as const,
+      modelId: configuration.groqModel,
+    };
+    logProviderFailure("groq", attempt);
+    return attempt;
   }
 }
 
@@ -245,6 +290,7 @@ export async function analyzeGlobalCandidate(
     const outcome = parseStructuredExtraction(geminiResult.text);
     if (outcome.status === "accepted")
       return { modelId: geminiResult.modelId, outcome };
+    logRejectedOutput(geminiResult.modelId, outcome.reason);
     lastAbstention = outcome;
   }
 
@@ -260,6 +306,7 @@ export async function analyzeGlobalCandidate(
       const outcome = parseStructuredExtraction(openRouterResult.text);
       if (outcome.status === "accepted")
         return { modelId: openRouterResult.modelId, outcome };
+      logRejectedOutput(openRouterResult.modelId, outcome.reason);
       lastAbstention = outcome;
     }
   }
@@ -270,6 +317,7 @@ export async function analyzeGlobalCandidate(
     const outcome = parseStructuredExtraction(groqResult.text);
     if (outcome.status === "accepted")
       return { modelId: groqResult.modelId, outcome };
+    logRejectedOutput(groqResult.modelId, outcome.reason);
     lastAbstention = outcome;
   }
 
