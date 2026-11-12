@@ -119,9 +119,9 @@ describe("direct global candidate analysis", () => {
       .slice(1, 4)
       .map(call => JSON.parse((call[1] as RequestInit).body as string));
     expect(openRouterBodies.map(body => body.model)).toEqual([
-      "minimax/minimax-m3:free",
+      "google/gemma-4-31b-it:free",
+      "nvidia/nemotron-3.5-lightning:free",
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-      "poolside/laguna-s-2.1:free",
     ]);
     expect(openRouterBodies[0]?.response_format).toEqual({
       type: "json_object",

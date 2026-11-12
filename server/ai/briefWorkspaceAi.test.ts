@@ -22,7 +22,7 @@ const configuration: WorkspaceAiConfiguration = {
   geminiApiKey: "gemini-test-key",
   geminiModel: "gemini-2.5-flash",
   openRouterApiKey: "openrouter-test-key",
-  openRouterModel: "minimax/minimax-m3:free",
+  openRouterModel: "google/gemma-4-31b-it:free",
   groqApiKey: "groq-test-key",
   groqModel: "openai/gpt-oss-20b",
 };
@@ -92,11 +92,11 @@ describe("workspace AI provider rotation", () => {
       "https://openrouter.ai/api/v1/chat/completions",
       "https://api.groq.com/openai/v1/chat/completions",
     ]);
-    expect(calls[1]?.body.model).toBe("minimax/minimax-m3:free");
-    expect(calls[2]?.body.model).toBe(
+    expect(calls[1]?.body.model).toBe("google/gemma-4-31b-it:free");
+    expect(calls[2]?.body.model).toBe("nvidia/nemotron-3.5-lightning:free");
+    expect(calls[3]?.body.model).toBe(
       "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     );
-    expect(calls[3]?.body.model).toBe("poolside/laguna-s-2.1:free");
     expect(calls[1]?.body.response_format).toEqual({ type: "json_object" });
     expect(calls[2]?.body.response_format).toBeUndefined();
     expect(calls[3]?.body.response_format).toBeUndefined();
