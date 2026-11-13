@@ -152,6 +152,32 @@ describe("workspace automatic publication", () => {
     expect(completed?.init?.body).toContain('"status":"completed"');
   });
 
+  it("publishes a source-only record when analysis fails", async () => {
+    const { result, requests } = await materialize({
+      candidatePayloads: [null],
+    });
+
+    await expect(result).resolves.toMatchObject({
+      changeCount: 0,
+      sourceRecordCount: 1,
+      analysisFailedCount: 1,
+    });
+    expect(
+      requests.some(
+        entry =>
+          entry.path.includes("/brief_source_records") &&
+          entry.init?.method === "POST" &&
+          entry.init.body?.toString().includes('"is_public":true')
+      )
+    ).toBe(true);
+    const completed = requests.find(
+      entry =>
+        entry.path.includes("brief_cycles?cycle_key") &&
+        entry.init?.method === "PATCH"
+    );
+    expect(completed?.init?.body).toContain('"status":"source_only"');
+  });
+
   it("refuses a candidate whose linked source is no longer enabled", async () => {
     const { result, requests } = await materialize({ sources: [] });
 

@@ -38,6 +38,22 @@ export type PublicWorkspaceExpansion = {
   generated_at: string;
 };
 
+export type PublicWorkspaceSourceRecord = {
+  id: string;
+  title: string;
+  official_record_url: string;
+  published_at: string;
+  source_name: string;
+  status: "analysis_pending" | "analysis_failed" | "analysis_rejected";
+  status_reason: string;
+  jurisdiction: {
+    code: string;
+    name: string;
+    region: string;
+    flag_emoji: string | null;
+  } | null;
+};
+
 export type PublicWorkspace = {
   cycle: {
     id: string;
@@ -45,7 +61,10 @@ export type PublicWorkspace = {
     completed_at: string | null;
     change_count: number;
     idea_count: number;
-    status: "completed";
+    source_record_count: number;
+    analysis_pending_count: number;
+    analysis_failed_count: number;
+    status: "completed" | "completed_with_warnings" | "source_only";
   } | null;
   schedule: {
     label: string;
@@ -55,6 +74,7 @@ export type PublicWorkspace = {
   changes: PublicWorkspaceChange[];
   ideas: PublicWorkspaceIdea[];
   expansions: PublicWorkspaceExpansion[];
+  source_records: PublicWorkspaceSourceRecord[];
 };
 
 type PublicCycleRow = PublicWorkspace["cycle"];
@@ -64,9 +84,9 @@ const CHANGE_LIMIT = 24;
 export async function listPublicWorkspace(): Promise<PublicWorkspace> {
   const cycleQuery = new URLSearchParams({
     select:
-      "id,scheduled_for,completed_at:finished_at,change_count,idea_count,status",
-    status: "eq.completed",
-    change_count: "gt.0",
+      "id,scheduled_for,completed_at:finished_at,change_count,idea_count,source_record_count,analysis_pending_count,analysis_failed_count,status",
+    status: "in.(completed,completed_with_warnings,source_only)",
+    or: "(change_count.gt.0,source_record_count.gt.0)",
     order: "scheduled_for.desc",
     limit: "1",
   });
@@ -86,8 +106,23 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
       changes: [],
       ideas: [],
       expansions: [],
+      source_records: [],
     };
   }
+
+  const sourceQuery = new URLSearchParams({
+    select:
+      "id,title,official_record_url,published_at,source_name,status,status_reason,jurisdiction:jurisdictions(code,name,region,flag_emoji)",
+    cycle_id: `eq.${cycle.id}`,
+    is_public: "eq.true",
+    order: "published_at.desc",
+    limit: String(CHANGE_LIMIT),
+  });
+  const sourceResponse = await supabasePublicFetch(
+    `/rest/v1/brief_source_records?${sourceQuery.toString()}`
+  );
+  const source_records =
+    (await sourceResponse.json()) as PublicWorkspaceSourceRecord[];
 
   const changeQuery = new URLSearchParams({
     select:
@@ -113,6 +148,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
       changes,
       ideas: [],
       expansions: [],
+      source_records,
     };
   }
 
@@ -139,6 +175,7 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
       changes,
       ideas,
       expansions: [],
+      source_records,
     };
   }
 
@@ -175,5 +212,6 @@ export async function listPublicWorkspace(): Promise<PublicWorkspace> {
     changes,
     ideas,
     expansions,
+    source_records,
   };
 }

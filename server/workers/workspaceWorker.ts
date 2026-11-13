@@ -30,12 +30,15 @@ type CandidateRow = {
   document_id: string;
   model_id: string | null;
   candidate_payload: unknown;
+  analysis_status: "accepted" | "abstained" | "failed";
+  failure_code: string | null;
 };
 
 type DocumentRow = {
   id: string;
   source_id: string;
   official_record_url: string;
+  title: string;
   published_at: string | null;
   content_sha256: string;
 };
@@ -154,18 +157,27 @@ export async function materializeWorkspaceCycle(input: {
   );
   let cycleId: string | undefined;
   try {
-    const candidates = await jsonRows<CandidateRow>(
+    const candidateRows = await jsonRows<CandidateRow>(
       request,
-      `/rest/v1/global_refresh_candidates?select=id,document_id,model_id,candidate_payload&run_id=eq.${encodeURIComponent(input.runId)}&analysis_status=eq.accepted&order=created_at.asc&limit=${MAX_WORKSPACE_CHANGES + 1}`
+      `/rest/v1/global_refresh_candidates?select=id,document_id,model_id,candidate_payload,analysis_status,failure_code&run_id=eq.${encodeURIComponent(input.runId)}&order=created_at.asc&limit=${input.sourceCount + 1}`
     );
-    if (candidates.length > MAX_WORKSPACE_CHANGES) {
+    const candidates = candidateRows.map(candidate => ({
+      ...candidate,
+      analysis_status:
+        candidate.analysis_status ??
+        (candidate.candidate_payload ? "accepted" : "failed"),
+    }));
+    if (candidates.length > input.sourceCount) {
       throw new WorkspaceWorkerError(422);
     }
+    const acceptedCandidates = candidates.filter(
+      candidate => candidate.analysis_status === "accepted"
+    );
     const documentIds = candidates.map(candidate => candidate.document_id);
     const documents = documentIds.length
       ? await jsonRows<DocumentRow>(
           request,
-          `/rest/v1/global_refresh_documents?select=id,source_id,official_record_url,published_at,content_sha256&id=${postgrestIn(documentIds)}&limit=${MAX_WORKSPACE_CHANGES}`
+          `/rest/v1/global_refresh_documents?select=id,source_id,official_record_url,title,published_at,content_sha256&id=${postgrestIn(documentIds)}&limit=${input.sourceCount + 1}`
         )
       : [];
     const sourceIds = [
@@ -201,11 +213,60 @@ export async function materializeWorkspaceCycle(input: {
     let changeCount = 0;
     let ideaCount = 0;
     let heldCount = 0;
+    let sourceRecordCount = 0;
+    let analysisPendingCount = 0;
+    let analysisFailedCount = 0;
     const generateIdea = input.generateIdea ?? generateWorkspaceIdea;
     const generateExpansion =
       input.generateExpansion ?? generateWorkspaceExpansion;
 
-    for (const candidate of candidates) {
+    for (const candidate of candidates.filter(
+      item => item.analysis_status !== "accepted"
+    )) {
+      const document = documentsById.get(candidate.document_id);
+      const source = document ? sourcesById.get(document.source_id) : undefined;
+      const jurisdiction = source
+        ? jurisdictionsById.get(source.jurisdiction_id)
+        : undefined;
+      if (!document || !source || !source.is_enabled || !jurisdiction) continue;
+      const sourceStatus =
+        candidate.analysis_status === "abstained"
+          ? "analysis_pending"
+          : "analysis_failed";
+      const statusReason = candidate.failure_code
+        ? `Automated analysis did not complete: ${candidate.failure_code}.`
+        : "Automated analysis did not complete during this cycle.";
+      await request(
+        "/rest/v1/brief_source_records?on_conflict=cycle_id%2Ccontent_sha256",
+        {
+          method: "POST",
+          headers: {
+            Prefer: "resolution=merge-duplicates,return=minimal",
+          },
+          body: JSON.stringify({
+            cycle_id: cycleId,
+            document_id: document.id,
+            jurisdiction_id: jurisdiction.id,
+            source_name: source.name.slice(0, 180),
+            title: (document.title ?? "Official source record").slice(0, 500),
+            official_record_url: document.official_record_url,
+            published_at: document.published_at ?? input.scheduledFor,
+            content_sha256: document.content_sha256,
+            status: sourceStatus,
+            status_reason: statusReason,
+            is_public: true,
+          }),
+        }
+      );
+      sourceRecordCount += 1;
+      if (sourceStatus === "analysis_pending") analysisPendingCount += 1;
+      else analysisFailedCount += 1;
+    }
+
+    for (const candidate of acceptedCandidates.slice(
+      0,
+      MAX_WORKSPACE_CHANGES
+    )) {
       const parsed = PolicySignalSchema.safeParse(candidate.candidate_payload);
       const document = documentsById.get(candidate.document_id);
       const source = document ? sourcesById.get(document.source_id) : undefined;
@@ -313,15 +374,31 @@ export async function materializeWorkspaceCycle(input: {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
         body: JSON.stringify({
-          status: "completed",
+          source_record_count: sourceRecordCount,
+          analysis_pending_count: analysisPendingCount,
+          analysis_failed_count: analysisFailedCount,
           change_count: changeCount,
           idea_count: ideaCount,
           finished_at: new Date().toISOString(),
-          note: `Published ${changeCount} source-linked changes; held ${heldCount} candidates below the automatic-publication threshold or without complete active provenance.`,
+          status:
+            sourceRecordCount > 0 && changeCount === 0
+              ? "source_only"
+              : sourceRecordCount > 0
+                ? "completed_with_warnings"
+                : "completed",
+          note: `Published ${changeCount} source-linked changes and ${sourceRecordCount} source-only records; held ${heldCount} candidates below the automatic-publication threshold or without complete active provenance.`,
         }),
       }
     );
-    return { cycleId, changeCount, ideaCount, heldCount };
+    return {
+      cycleId,
+      changeCount,
+      ideaCount,
+      heldCount,
+      sourceRecordCount,
+      analysisPendingCount,
+      analysisFailedCount,
+    };
   } catch (error) {
     if (cycleId) {
       await markCycleFailed(request, { cycleKey: input.cycleKey, error });

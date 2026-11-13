@@ -62,6 +62,7 @@ describe("portable public server", () => {
         changes: [],
         ideas: [],
         expansions: [],
+        source_records: [],
       }),
     });
     const running = await startServer(app);

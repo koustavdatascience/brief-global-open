@@ -10,7 +10,10 @@ export type PublicWorkspace = {
     completed_at: string | null;
     change_count: number;
     idea_count: number;
-    status: "completed";
+    source_record_count: number;
+    analysis_pending_count: number;
+    analysis_failed_count: number;
+    status: "completed" | "completed_with_warnings" | "source_only";
   } | null;
   schedule: {
     label: string;
@@ -46,6 +49,21 @@ export type PublicWorkspace = {
     idea_id: string;
     body_markdown: string;
     generated_at: string;
+  }>;
+  source_records: Array<{
+    id: string;
+    title: string;
+    official_record_url: string;
+    published_at: string;
+    source_name: string;
+    status: "analysis_pending" | "analysis_failed" | "analysis_rejected";
+    status_reason: string;
+    jurisdiction: {
+      code: string;
+      name: string;
+      region: string;
+      flag_emoji: string | null;
+    } | null;
   }>;
 };
 

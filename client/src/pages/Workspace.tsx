@@ -854,7 +854,7 @@ export default function Workspace() {
             <EditorialLabel>Latest cycle</EditorialLabel>
             <p className="mt-2 text-sm text-white/50">
               {workspace?.cycle
-                ? `${formatDate(workspace.cycle.completed_at ?? workspace.cycle.scheduled_for)} · ${workspace.cycle.change_count} changes · ${workspace.cycle.idea_count} ideas`
+                ? `${formatDate(workspace.cycle.completed_at ?? workspace.cycle.scheduled_for)} · ${workspace.cycle.source_record_count} sources · ${workspace.cycle.change_count} changes · ${workspace.cycle.idea_count} ideas · ${workspace.cycle.status.replaceAll("_", " ")}`
                 : "No completed cycle has been published yet."}
             </p>
           </div>
@@ -968,7 +968,9 @@ export default function Workspace() {
             </button>
           </div>
         ) : null}
-        {status === "ready" && visibleChanges.length === 0 ? (
+        {status === "ready" &&
+        visibleChanges.length === 0 &&
+        (workspace?.source_records.length ?? 0) === 0 ? (
           <div className="border-b border-white/10 py-20">
             <Sparkles className="h-5 w-5 text-[#aeb9ff]" />
             <h2 className="mt-5 text-2xl font-medium tracking-[-0.04em]">
@@ -980,6 +982,67 @@ export default function Workspace() {
               ideas available to select and expand.
             </p>
           </div>
+        ) : null}
+
+        {status === "ready" && workspace?.source_records.length ? (
+          <section className="border-b border-white/10 py-10">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <EditorialLabel>Official sources collected</EditorialLabel>
+                <h2 className="mt-3 text-2xl font-medium tracking-[-0.04em]">
+                  Analysis is pending for these records
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
+                  These official documents were collected successfully. They are
+                  shown without generated claims until an AI provider completes
+                  the evidence review.
+                </p>
+              </div>
+              <span className="rounded-full border border-[#d5a85c]/30 bg-[#d5a85c]/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-[#e7c98e]">
+                Source-only cycle
+              </span>
+            </div>
+            <div className="mt-8 divide-y divide-white/10">
+              {workspace.source_records.map(source => (
+                <article
+                  className="grid gap-4 py-6 lg:grid-cols-[12rem_minmax(0,1fr)_12rem] lg:gap-10"
+                  key={source.id}
+                >
+                  <div className="text-xs uppercase tracking-[0.12em] text-white/40">
+                    <span>{source.jurisdiction?.flag_emoji ?? "◎"}</span>{" "}
+                    {source.jurisdiction?.name ?? "Global"}
+                    <br />
+                    <span className="mt-2 inline-block normal-case tracking-normal text-white/35">
+                      {formatDate(source.published_at)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="rounded-full border border-white/10 px-2 py-1 text-[0.62rem] uppercase tracking-[0.12em] text-white/45">
+                      {source.status.replaceAll("_", " ")}
+                    </span>
+                    <h3 className="mt-3 max-w-3xl text-xl font-medium leading-tight tracking-[-0.03em] text-white">
+                      {source.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-white/45">
+                      {source.status_reason}
+                    </p>
+                    <a
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-white/65 transition hover:text-white"
+                      href={source.official_record_url}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Read {source.source_name}
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.1em] text-white/35">
+                    No generated summary
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         <div className="divide-y divide-white/10">

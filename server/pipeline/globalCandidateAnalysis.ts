@@ -24,6 +24,7 @@ export type DirectProviderConfiguration = {
   geminiModel: string;
   openRouterApiKey?: string;
   openRouterModel: string;
+  openRouterModels?: string[];
   groqApiKey?: string;
   groqModel: string;
 };
@@ -62,6 +63,156 @@ function logRejectedOutput(modelId: string | undefined, reason: string) {
 
 function configuredModel(value: string | undefined, fallback: string): string {
   return value?.trim() || fallback;
+}
+
+type ModelCatalog = {
+  data?: Array<{ id?: string }>;
+};
+
+let discoveredConfiguration: Promise<DirectProviderConfiguration> | undefined;
+const providerCooldowns = new Set<"gemini" | "openrouter" | "groq">();
+
+function shouldSkipProvider(provider: "gemini" | "openrouter" | "groq") {
+  return providerCooldowns.has(provider);
+}
+
+function maybeCooldownProvider(
+  provider: "gemini" | "openrouter" | "groq",
+  attempt: ProviderAttempt
+) {
+  if (
+    attempt.status === "provider_failure" &&
+    (attempt.httpStatus === 401 ||
+      attempt.httpStatus === 403 ||
+      attempt.httpStatus === 429)
+  )
+    providerCooldowns.add(provider);
+}
+
+async function readCatalog(
+  request: typeof fetch,
+  url: string,
+  headers: Record<string, string>
+): Promise<ModelCatalog | null> {
+  try {
+    const response = await request(url, {
+      headers,
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as ModelCatalog;
+    return payload && Array.isArray(payload.data) ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
+async function discoverProviderConfiguration(
+  request: typeof fetch,
+  base: DirectProviderConfiguration
+): Promise<DirectProviderConfiguration> {
+  const next = { ...base };
+  if (base.geminiApiKey) {
+    try {
+      const response = await request(
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        {
+          headers: { "x-goog-api-key": base.geminiApiKey },
+          signal: AbortSignal.timeout(8_000),
+        }
+      );
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          models?: Array<{
+            name?: string;
+            supportedGenerationMethods?: string[];
+          }>;
+        };
+        const models = (payload.models ?? [])
+          .filter(model =>
+            model.supportedGenerationMethods?.includes("generateContent")
+          )
+          .map(model => model.name?.replace(/^models\//, ""))
+          .filter((model): model is string => Boolean(model));
+        if (models.length && !models.includes(base.geminiModel)) {
+          next.geminiModel =
+            [
+              "gemini-2.5-flash",
+              "gemini-2.0-flash",
+              "gemini-2.5-flash-lite",
+            ].find(model => models.includes(model)) ?? models[0];
+        }
+        console.info("[brief] Gemini model catalog selected", {
+          configured: base.geminiModel,
+          selected: next.geminiModel,
+          availableCount: models.length,
+        });
+      }
+    } catch {
+      console.warn(
+        "[brief] Gemini model catalog unavailable; using configured model"
+      );
+    }
+  }
+  if (base.openRouterApiKey) {
+    const catalog = await readCatalog(
+      request,
+      "https://openrouter.ai/api/v1/models",
+      { Authorization: `Bearer ${base.openRouterApiKey}` }
+    );
+    if (catalog) {
+      const ids = (catalog.data ?? [])
+        .map(model => model.id)
+        .filter((model): model is string => Boolean(model));
+      const free = ids.filter(model => model.endsWith(":free"));
+      const available = free.length ? free : ids;
+      if (available.length && !available.includes(base.openRouterModel))
+        next.openRouterModel = available[0];
+      next.openRouterModels = available.slice(0, 12);
+      console.info("[brief] OpenRouter model catalog selected", {
+        configured: base.openRouterModel,
+        selected: next.openRouterModel,
+        availableCount: available.length,
+      });
+    }
+  }
+  if (base.groqApiKey) {
+    const catalog = await readCatalog(
+      request,
+      "https://api.groq.com/openai/v1/models",
+      { Authorization: `Bearer ${base.groqApiKey}` }
+    );
+    if (catalog) {
+      const ids = (catalog.data ?? [])
+        .map(model => model.id)
+        .filter((model): model is string => Boolean(model));
+      if (ids.length && !ids.includes(base.groqModel)) {
+        next.groqModel =
+          ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"].find(model =>
+            ids.includes(model)
+          ) ?? ids[0];
+      }
+      console.info("[brief] Groq model catalog selected", {
+        configured: base.groqModel,
+        selected: next.groqModel,
+        availableCount: ids.length,
+      });
+    }
+  }
+  return next;
+}
+
+async function runtimeProviderConfiguration(
+  request: typeof fetch
+): Promise<DirectProviderConfiguration> {
+  if (!discoveredConfiguration) {
+    const base = readDirectProviderConfiguration();
+    discoveredConfiguration = discoverProviderConfiguration(
+      request,
+      base
+    ).catch(() => base);
+  }
+  return discoveredConfiguration;
 }
 
 export function readDirectProviderConfiguration(
@@ -275,16 +426,19 @@ export async function analyzeGlobalCandidate(
     return { outcome: { status: "abstained", reason: "schema_mismatch" } };
 
   const request = dependencies.fetch ?? fetch;
-  const configuration = (
-    dependencies.providerConfiguration ?? readDirectProviderConfiguration
-  )();
+  const configuration = dependencies.providerConfiguration
+    ? dependencies.providerConfiguration()
+    : await runtimeProviderConfiguration(request);
   const prompt = buildExtractionPrompt(normalizedText, context);
   let lastModelId: string | undefined;
   let lastAbstention:
     | Extract<GlobalCandidateAnalysisResult["outcome"], { status: "abstained" }>
     | undefined;
 
-  const geminiResult = await analyzeWithGemini(prompt, configuration, request);
+  const geminiResult = shouldSkipProvider("gemini")
+    ? { status: "unavailable" as const, modelId: configuration.geminiModel }
+    : await analyzeWithGemini(prompt, configuration, request);
+  maybeCooldownProvider("gemini", geminiResult);
   lastModelId = geminiResult.modelId ?? lastModelId;
   if (geminiResult.status === "output") {
     const outcome = parseStructuredExtraction(geminiResult.text);
@@ -294,13 +448,18 @@ export async function analyzeGlobalCandidate(
     lastAbstention = outcome;
   }
 
-  for (const model of openRouterModelChain(configuration.openRouterModel)) {
+  for (const model of openRouterModelChain(
+    configuration.openRouterModel,
+    configuration.openRouterModels
+  )) {
+    if (shouldSkipProvider("openrouter")) break;
     const openRouterResult = await analyzeWithOpenRouter(
       prompt,
       configuration,
       request,
       model
     );
+    maybeCooldownProvider("openrouter", openRouterResult);
     lastModelId = openRouterResult.modelId ?? lastModelId;
     if (openRouterResult.status === "output") {
       const outcome = parseStructuredExtraction(openRouterResult.text);
@@ -311,7 +470,10 @@ export async function analyzeGlobalCandidate(
     }
   }
 
-  const groqResult = await analyzeWithGroq(prompt, configuration, request);
+  const groqResult = shouldSkipProvider("groq")
+    ? { status: "unavailable" as const, modelId: configuration.groqModel }
+    : await analyzeWithGroq(prompt, configuration, request);
+  maybeCooldownProvider("groq", groqResult);
   lastModelId = groqResult.modelId ?? lastModelId;
   if (groqResult.status === "output") {
     const outcome = parseStructuredExtraction(groqResult.text);

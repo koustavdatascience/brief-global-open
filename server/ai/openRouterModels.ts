@@ -8,8 +8,10 @@ export const FREE_OPENROUTER_FALLBACK_MODELS = [
   "nvidia/nemotron-3.5-lightning:free",
 ] as const;
 
-export function openRouterModelChain(primary: string) {
-  return Array.from(new Set([primary, ...FREE_OPENROUTER_FALLBACK_MODELS]));
+export function openRouterModelChain(primary: string, available?: string[]) {
+  return Array.from(
+    new Set([primary, ...(available ?? []), ...FREE_OPENROUTER_FALLBACK_MODELS])
+  );
 }
 
 export function supportsJsonObjectResponseFormat(model: string) {
