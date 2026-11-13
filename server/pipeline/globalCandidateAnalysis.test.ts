@@ -97,6 +97,9 @@ describe("direct global candidate analysis", () => {
       .mockResolvedValueOnce(
         new Response("upstream unavailable", { status: 503 })
       )
+      .mockResolvedValueOnce(
+        new Response("upstream unavailable", { status: 503 })
+      )
       .mockResolvedValueOnce(chatResponse(validSignal));
     const result = await analyzeGlobalCandidate(
       "A short official record.",
@@ -113,21 +116,28 @@ describe("direct global candidate analysis", () => {
       "https://openrouter.ai/api/v1/chat/completions",
       "https://openrouter.ai/api/v1/chat/completions",
       "https://openrouter.ai/api/v1/chat/completions",
+      "https://openrouter.ai/api/v1/chat/completions",
       "https://api.groq.com/openai/v1/chat/completions",
     ]);
     const openRouterBodies = fetch.mock.calls
-      .slice(1, 4)
+      .slice(1, 5)
       .map(call => JSON.parse((call[1] as RequestInit).body as string));
     expect(openRouterBodies.map(body => body.model)).toEqual([
+      "nvidia/nemotron-3.5-super-vl:free",
+      "google/gemma-4-26b-a4b-it:free",
       "google/gemma-4-31b-it:free",
       "nvidia/nemotron-3.5-lightning:free",
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
     ]);
     expect(openRouterBodies[0]?.response_format).toEqual({
       type: "json_object",
     });
-    expect(openRouterBodies[1]?.response_format).toBeUndefined();
-    expect(openRouterBodies[2]?.response_format).toBeUndefined();
+    expect(openRouterBodies[1]?.response_format).toEqual({
+      type: "json_object",
+    });
+    expect(openRouterBodies[2]?.response_format).toEqual({
+      type: "json_object",
+    });
+    expect(openRouterBodies[3]?.response_format).toBeUndefined();
   });
 
   it("continues to a later provider after a primary abstention", async () => {

@@ -1,9 +1,11 @@
-export const DEFAULT_FREE_OPENROUTER_MODEL = "google/gemma-4-31b-it:free";
+export const DEFAULT_FREE_OPENROUTER_MODEL =
+  "nvidia/nemotron-3.5-super-vl:free";
 
 export const FREE_OPENROUTER_FALLBACK_MODELS = [
   DEFAULT_FREE_OPENROUTER_MODEL,
+  "google/gemma-4-26b-a4b-it:free",
+  "google/gemma-4-31b-it:free",
   "nvidia/nemotron-3.5-lightning:free",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
 ] as const;
 
 export function openRouterModelChain(primary: string) {
@@ -11,5 +13,9 @@ export function openRouterModelChain(primary: string) {
 }
 
 export function supportsJsonObjectResponseFormat(model: string) {
-  return model === "google/gemma-4-31b-it:free";
+  return [
+    "nvidia/nemotron-3.5-super-vl:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "google/gemma-4-31b-it:free",
+  ].includes(model);
 }

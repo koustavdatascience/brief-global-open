@@ -11,9 +11,9 @@ import {
   supportsJsonObjectResponseFormat,
 } from "../ai/openRouterModels";
 
-export const GEMINI_PRIMARY_MODEL_ID = "gemini-2.5-flash";
+export const GEMINI_PRIMARY_MODEL_ID = "gemini-2.5-flash-lite";
 export const OPENROUTER_FALLBACK_MODEL_ID = DEFAULT_FREE_OPENROUTER_MODEL;
-export const GROQ_FALLBACK_MODEL_ID = "openai/gpt-oss-20b";
+export const GROQ_FALLBACK_MODEL_ID = "llama-3.3-70b-versatile";
 
 const PROVIDER_TIMEOUT_MS = 20_000;
 const PROVIDER_SYSTEM_INSTRUCTION =

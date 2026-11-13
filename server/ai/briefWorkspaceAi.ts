@@ -11,9 +11,9 @@ const EXPANSION_PROMPT_VERSION = "expansion-v6-detailed-pdf-editorial-2026-08";
 
 const PDF_OUTPUT_CONTRACT = `The client exports this PRD through a structured editorial PDF layout. Treat the Markdown as layout data, not as free-form notes. Put every section heading on its own line using exactly the supplied "## Heading" form, with a blank line before and after it; never place two headings on one line. Use short, readable paragraphs and hyphen bullets only when a sequence, checklist, or set of controls is clearer as a list. Do not use Markdown tables, code fences, HTML, blockquotes, emojis, decorative separators, nested headings, bold label-colon fragments, or repeated title pages. Keep the detailed body substantive and normally detailed: the 700–1,200-character limit applies only to the separate idea summary plus rationale, not this PRD. Finish with one Official source section containing only the exact official URL as a Markdown link; do not repeat the source link elsewhere in the body. Preserve the distinction between confirmed policy facts and the proposed product response so the PDF remains source-grounded.`;
 
-export const DEFAULT_WORKSPACE_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_WORKSPACE_GEMINI_MODEL = "gemini-2.5-flash-lite";
 export const DEFAULT_WORKSPACE_OPENROUTER_MODEL = DEFAULT_FREE_OPENROUTER_MODEL;
-export const DEFAULT_WORKSPACE_GROQ_MODEL = "openai/gpt-oss-20b";
+export const DEFAULT_WORKSPACE_GROQ_MODEL = "llama-3.3-70b-versatile";
 
 const IdeaSchema = z.object({
   title: z.string().min(8).max(220),

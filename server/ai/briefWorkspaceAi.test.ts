@@ -20,11 +20,11 @@ const change: WorkspaceChangeInput = {
 
 const configuration: WorkspaceAiConfiguration = {
   geminiApiKey: "gemini-test-key",
-  geminiModel: "gemini-2.5-flash",
+  geminiModel: "gemini-2.5-flash-lite",
   openRouterApiKey: "openrouter-test-key",
-  openRouterModel: "google/gemma-4-31b-it:free",
+  openRouterModel: "nvidia/nemotron-3.5-super-vl:free",
   groqApiKey: "groq-test-key",
-  groqModel: "openai/gpt-oss-20b",
+  groqModel: "llama-3.3-70b-versatile",
 };
 
 function geminiResponse(value: unknown, status = 200) {
@@ -69,7 +69,7 @@ describe("workspace AI provider rotation", () => {
       >;
       calls.push({ url: String(input), body });
       if (calls.length === 1) return geminiResponse({}, 429);
-      if (calls.length <= 4) return chatResponse({}, 429);
+      if (calls.length <= 5) return chatResponse({}, 429);
       return chatResponse(ideaValue());
     };
 
@@ -78,7 +78,7 @@ describe("workspace AI provider rotation", () => {
       configuration: () => configuration,
     });
 
-    expect(result?.modelId).toBe("openai/gpt-oss-20b");
+    expect(result?.modelId).toBe("llama-3.3-70b-versatile");
     expect(
       (result?.summary.length ?? 0) + (result?.rationale.length ?? 0)
     ).toBeGreaterThanOrEqual(700);
@@ -86,20 +86,21 @@ describe("workspace AI provider rotation", () => {
       (result?.summary.length ?? 0) + (result?.rationale.length ?? 0)
     ).toBeLessThanOrEqual(1200);
     expect(calls.map(call => call.url)).toEqual([
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      "https://openrouter.ai/api/v1/chat/completions",
       "https://openrouter.ai/api/v1/chat/completions",
       "https://openrouter.ai/api/v1/chat/completions",
       "https://openrouter.ai/api/v1/chat/completions",
       "https://api.groq.com/openai/v1/chat/completions",
     ]);
-    expect(calls[1]?.body.model).toBe("google/gemma-4-31b-it:free");
-    expect(calls[2]?.body.model).toBe("nvidia/nemotron-3.5-lightning:free");
-    expect(calls[3]?.body.model).toBe(
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
-    );
+    expect(calls[1]?.body.model).toBe("nvidia/nemotron-3.5-super-vl:free");
+    expect(calls[2]?.body.model).toBe("google/gemma-4-26b-a4b-it:free");
+    expect(calls[3]?.body.model).toBe("google/gemma-4-31b-it:free");
+    expect(calls[4]?.body.model).toBe("nvidia/nemotron-3.5-lightning:free");
     expect(calls[1]?.body.response_format).toEqual({ type: "json_object" });
-    expect(calls[2]?.body.response_format).toBeUndefined();
-    expect(calls[3]?.body.response_format).toBeUndefined();
+    expect(calls[2]?.body.response_format).toEqual({ type: "json_object" });
+    expect(calls[3]?.body.response_format).toEqual({ type: "json_object" });
+    expect(calls[4]?.body.response_format).toBeUndefined();
   });
 
   it("uses the grounded architecture fallback after every provider is exhausted", async () => {
@@ -126,7 +127,7 @@ describe("workspace AI provider rotation", () => {
       "## System boundary and architecture"
     );
     expect(result?.body_markdown).toContain("## MVP vertical slice");
-    expect(calls).toHaveLength(5);
+    expect(calls).toHaveLength(6);
   });
 
   it("advances after a valid-but-incomplete PRD and accepts a later complete result", async () => {
@@ -167,7 +168,7 @@ describe("workspace AI provider rotation", () => {
         return geminiResponse({
           body_markdown: "## Plain-language context\\nToo short",
         });
-      if (calls.length <= 4) return chatResponse({}, 429);
+      if (calls.length <= 5) return chatResponse({}, 429);
       return chatResponse({ body_markdown: completePrd });
     };
 
@@ -181,21 +182,21 @@ describe("workspace AI provider rotation", () => {
       { fetch: request, configuration: () => configuration }
     );
 
-    expect(result?.modelId).toBe("openai/gpt-oss-20b");
+    expect(result?.modelId).toBe("llama-3.3-70b-versatile");
     expect(result?.body_markdown).toContain(
       "## System boundary and architecture"
     );
-    expect(calls).toHaveLength(5);
+    expect(calls).toHaveLength(6);
     expect(JSON.stringify(calls[0]?.body)).toContain(
       "structured editorial PDF layout"
     );
-    expect(JSON.stringify(calls[4]?.body)).toContain(
+    expect(JSON.stringify(calls[5]?.body)).toContain(
       "never place two headings on one line"
     );
     expect(calls[0]?.body.generationConfig).toMatchObject({
       maxOutputTokens: 7200,
     });
-    expect(calls[4]?.body.max_tokens).toBe(7200);
+    expect(calls[5]?.body.max_tokens).toBe(7200);
   });
 
   it("keeps the Groq model configurable while defaulting it for existing deployments", () => {
@@ -206,6 +207,6 @@ describe("workspace AI provider rotation", () => {
     });
 
     expect(result.groqApiKey).toBe("groq");
-    expect(result.groqModel).toBe("openai/gpt-oss-20b");
+    expect(result.groqModel).toBe("llama-3.3-70b-versatile");
   });
 });
